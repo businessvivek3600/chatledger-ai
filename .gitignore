@@ -39,3 +39,4 @@ apps/backend/uploads/
 uploads/
 coverage/
 .turbo/
+.neon
