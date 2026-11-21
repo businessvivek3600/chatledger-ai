@@ -1,0 +1,878 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ----------------------------------------------------
+// 1. PLATFORM & TENANCY
+// ----------------------------------------------------
+
+enum UserRole {
+  SUPER_ADMIN
+  PLATFORM_SUPPORT
+  PLATFORM_FINANCE
+  BUSINESS_OWNER
+  BUSINESS_ADMIN
+  MANAGER
+  SALES_AGENT
+  CUSTOMER_SUPPORT
+  APPOINTMENT_MANAGER
+  VIEWER
+}
+
+enum IndustryType {
+  CLINIC
+  SALON
+  COACHING
+  REAL_ESTATE
+  RETAIL
+  CONSULTING
+  REPAIR
+  AGENCY
+  OTHER
+}
+
+enum SubscriptionPlanTier {
+  FREE_TRIAL
+  STARTER
+  GROWTH
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  EXPIRED
+}
+
+model User {
+  id                String       @id @default(uuid())
+  email             String       @unique
+  passwordHash      String
+  fullName          String
+  phone             String?
+  role              UserRole     @default(BUSINESS_OWNER)
+  isEmailVerified   Boolean      @default(false)
+  isPhoneVerified   Boolean      @default(false)
+  twoFactorEnabled  Boolean      @default(false)
+  twoFactorSecret   String?
+  status            String       @default("ACTIVE") // ACTIVE, SUSPENDED, PENDING
+  refreshTokenHash  String?
+  lastLoginAt       DateTime?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  memberships       TenantMember[]
+  assignedConversations Conversation[] @relation("AssignedAgent")
+  sentMessages      Message[]
+  assignedLeads     Lead[]
+  assignedAppointments Appointment[]
+  assignedTasks     Task[]
+  auditLogs         AuditLog[]
+  supportTickets    SupportTicket[]
+
+  @@index([email])
+}
+
+model Tenant {
+  id                String        @id @default(uuid())
+  name              String
+  slug              String        @unique
+  industry          IndustryType  @default(OTHER)
+  phone             String
+  email             String
+  address           String?
+  city              String?
+  state             String?
+  country           String        @default("IN")
+  pincode           String?
+  gstin             String?
+  timezone          String        @default("Asia/Kolkata")
+  currency          String        @default("INR")
+  logoUrl           String?
+  status            String        @default("ACTIVE") // ACTIVE, SUSPENDED, ONBOARDING
+  workingHours      Json?         // { days: [1,2,3,4,5], start: "09:00", end: "19:00" }
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  members           TenantMember[]
+  subscription      Subscription?
+  whatsappAccount   WhatsAppAccount?
+  aiAssistant       AiAssistant?
+  customers         Customer[]
+  leads             Lead[]
+  conversations     Conversation[]
+  messages          Message[]
+  appointments      Appointment[]
+  appointmentServices AppointmentService[]
+  availabilitySlots AvailabilitySlot[]
+  tasks             Task[]
+  workflows         AutomationWorkflow[]
+  campaigns         Campaign[]
+  paymentRequests   PaymentRequest[]
+  invoices          CustomerInvoice[]
+  knowledgeDocs     KnowledgeDocument[]
+  knowledgeChunks   KnowledgeChunk[]
+  auditLogs         AuditLog[]
+  webhookEvents     WebhookEvent[]
+  supportTickets    SupportTicket[]
+
+  @@index([slug])
+  @@index([status])
+}
+
+model TenantMember {
+  id          String    @id @default(uuid())
+  tenantId    String
+  userId      String
+  role        UserRole  @default(SALES_AGENT)
+  permissions Json?     // array of string permissions
+  isOwner     Boolean   @default(false)
+  status      String    @default("ACTIVE")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, userId])
+  @@index([tenantId])
+  @@index([userId])
+}
+
+model SubscriptionPlan {
+  id            String               @id @default(uuid())
+  name          String
+  tier          SubscriptionPlanTier @unique
+  priceMonthly  Float
+  priceYearly   Float
+  limits        Json                 // { maxNumbers: 1, maxTeamMembers: 3, maxConversations: 500, maxTokens: 100000, maxAutomations: 3, maxContacts: 1000 }
+  features      Json                 // array of feature strings
+  isPopular     Boolean              @default(false)
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+
+  subscriptions Subscription[]
+}
+
+model Subscription {
+  id                     String             @id @default(uuid())
+  tenantId               String             @unique
+  planId                 String
+  status                 SubscriptionStatus @default(TRIALING)
+  currentPeriodStart     DateTime           @default(now())
+  currentPeriodEnd       DateTime
+  cancelAtPeriodEnd      Boolean            @default(false)
+  razorpaySubscriptionId String?
+  createdAt              DateTime           @default(now())
+  updatedAt              DateTime           @updatedAt
+
+  tenant                 Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  plan                   SubscriptionPlan   @relation(fields: [planId], references: [id])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  tenantId  String?
+  userId    String?
+  action    String
+  entity    String
+  entityId  String?
+  details   Json?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  tenant    Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
+  @@index([createdAt])
+}
+
+model PlatformSetting {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     Json
+  updatedAt DateTime @updatedAt
+}
+
+// ----------------------------------------------------
+// 2. WHATSAPP & REAL-TIME INBOX
+// ----------------------------------------------------
+
+model WhatsAppAccount {
+  id                    String   @id @default(uuid())
+  tenantId              String   @unique
+  wabaId                String?  // WhatsApp Business Account ID
+  name                  String
+  status                String   @default("CONNECTED") // CONNECTED, DISCONNECTED, PENDING
+  accessTokenEncrypted  String?
+  webhookVerifyToken    String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  tenant                Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  phoneNumbers          WhatsAppPhoneNumber[]
+  templates             WhatsAppTemplate[]
+}
+
+model WhatsAppPhoneNumber {
+  id                     String          @id @default(uuid())
+  accountId              String
+  phoneNumberId          String          @unique
+  displayPhoneNumber     String
+  verifiedName           String
+  qualityRating          String          @default("GREEN")
+  codeVerificationStatus String          @default("VERIFIED")
+  isDefault              Boolean         @default(true)
+  status                 String          @default("ACTIVE")
+  createdAt              DateTime        @default(now())
+  updatedAt              DateTime        @updatedAt
+
+  account                WhatsAppAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+}
+
+model WhatsAppTemplate {
+  id          String          @id @default(uuid())
+  accountId   String
+  name        String
+  category    String          // MARKETING, UTILITY, AUTHENTICATION
+  language    String          @default("en_US")
+  components  Json            // header, body, buttons
+  status      String          @default("APPROVED") // APPROVED, PENDING, REJECTED
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  account     WhatsAppAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+}
+
+enum ConversationStatus {
+  UNASSIGNED
+  OPEN
+  PENDING
+  RESOLVED
+  ARCHIVED
+}
+
+enum HandlingMode {
+  AI
+  HUMAN
+  AI_ASSISTED
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  DOCUMENT
+  AUDIO
+  VIDEO
+  TEMPLATE
+  INTERACTIVE
+  LOCATION
+  NOTE
+}
+
+enum MessageSender {
+  CUSTOMER
+  AGENT
+  AI
+  SYSTEM
+}
+
+enum MessageDeliveryStatus {
+  PENDING
+  SENT
+  DELIVERED
+  READ
+  FAILED
+}
+
+model Conversation {
+  id             String             @id @default(uuid())
+  tenantId       String
+  customerId     String
+  assignedUserId String?
+  status         ConversationStatus @default(UNASSIGNED)
+  handlingMode   HandlingMode       @default(AI)
+  lastMessageAt  DateTime           @default(now())
+  unreadCount    Int                @default(0)
+  aiConfidence   Float?             @default(1.0)
+  summary        String?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  tenant         Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  customer       Customer           @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  assignedUser   User?              @relation("AssignedAgent", fields: [assignedUserId], references: [id], onDelete: SetNull)
+  messages       Message[]
+  tasks          Task[]
+
+  @@index([tenantId, status])
+  @@index([customerId])
+  @@index([lastMessageAt])
+}
+
+model Message {
+  id                String                @id @default(uuid())
+  tenantId          String
+  conversationId    String
+  sender            MessageSender
+  senderUserId      String?
+  messageType       MessageType           @default(TEXT)
+  content           String
+  mediaUrl          String?
+  mediaType         String?
+  mediaSize         Int?
+  templateName      String?
+  whatsappMessageId String?               @unique
+  deliveryStatus    MessageDeliveryStatus @default(SENT)
+  metadata          Json?
+  createdAt         DateTime              @default(now())
+
+  tenant            Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  conversation      Conversation          @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderUser        User?                 @relation(fields: [senderUserId], references: [id], onDelete: SetNull)
+
+  @@index([conversationId, createdAt])
+  @@index([tenantId])
+}
+
+model WebhookEvent {
+  id             String    @id @default(uuid())
+  tenantId       String?
+  eventType      String
+  provider       String    // META, RAZORPAY
+  payload        Json
+  status         String    @default("RECEIVED") // RECEIVED, PROCESSED, FAILED
+  errorMessage   String?
+  idempotencyKey String?   @unique
+  processedAt    DateTime?
+  createdAt      DateTime  @default(now())
+
+  tenant         Tenant?   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([provider, eventType])
+}
+
+// ----------------------------------------------------
+// 3. CRM: CUSTOMERS & LEADS
+// ----------------------------------------------------
+
+model Customer {
+  id                String         @id @default(uuid())
+  tenantId          String
+  name              String
+  phone             String
+  email             String?
+  company           String?
+  address           String?
+  city              String?
+  state             String?
+  country           String         @default("IN")
+  pincode           String?
+  type              String         @default("REGULAR") // REGULAR, VIP, WHOLESALE
+  lifetimeValue     Float          @default(0)
+  totalPurchases    Int            @default(0)
+  outstandingAmount Float          @default(0)
+  lastInteractionAt DateTime       @default(now())
+  tags              Json?          // ["vip", "interested-facial"]
+  notes             CustomerNote[]
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  tenant            Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  leads             Lead[]
+  conversations     Conversation[]
+  appointments      Appointment[]
+  paymentRequests   PaymentRequest[]
+  invoices          CustomerInvoice[]
+  tasks             Task[]
+
+  @@unique([tenantId, phone])
+  @@index([tenantId, phone])
+}
+
+enum LeadStage {
+  NEW
+  CONTACTED
+  QUALIFIED
+  INTERESTED
+  PROPOSAL_SENT
+  NEGOTIATION
+  CONVERTED
+  LOST
+}
+
+enum LeadPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum LeadSource {
+  WHATSAPP
+  WEBSITE
+  LANDING_PAGE
+  MANUAL
+  AD_CAMPAIGN
+  REFERRAL
+  API
+}
+
+model Lead {
+  id                String         @id @default(uuid())
+  tenantId          String
+  customerId        String?
+  name              String
+  phone             String
+  email             String?
+  company           String?
+  industry          String?
+  stage             LeadStage      @default(NEW)
+  priority          LeadPriority   @default(MEDIUM)
+  source            LeadSource     @default(WHATSAPP)
+  budget            Float?
+  requirements      String?
+  interestedService String?
+  assignedUserId    String?
+  score             Int            @default(50)
+  nextFollowUpAt    DateTime?
+  lastContactAt     DateTime       @default(now())
+  tags              Json?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  tenant            Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  customer          Customer?      @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  assignedUser      User?          @relation(fields: [assignedUserId], references: [id], onDelete: SetNull)
+  activities        LeadActivity[]
+  tasks             Task[]
+
+  @@index([tenantId, stage])
+  @@index([assignedUserId])
+}
+
+model LeadActivity {
+  id          String   @id @default(uuid())
+  leadId      String
+  tenantId    String
+  userId      String?
+  type        String   // STATUS_CHANGE, NOTE, CALL, MESSAGE, APPOINTMENT
+  title       String
+  description String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  lead        Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([leadId])
+}
+
+model CustomerNote {
+  id          String   @id @default(uuid())
+  customerId  String
+  tenantId    String
+  userId      String?
+  content     String
+  isPinned    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId])
+}
+
+// ----------------------------------------------------
+// 4. AI ASSISTANT & KNOWLEDGE BASE
+// ----------------------------------------------------
+
+model AiAssistant {
+  id                    String   @id @default(uuid())
+  tenantId              String   @unique
+  name                  String   @default("NexaBot")
+  personality           String   @default("Professional, helpful, warm, and concise")
+  language              String   @default("English")
+  tone                  String   @default("Courteous")
+  businessIntro         String?
+  productsServices      Json?    // list of services/products with prices
+  pricingInfo           Json?    // price lists, discounts
+  businessHours         Json?    // opening/closing schedule
+  contactDetails        Json?    // phone, address, maps link
+  appointmentRules      Json?    // slot duration, booking window, advance notice
+  escalationRules       Json?    // when to transfer to human agent
+  responseRestrictions  Json?    // prohibited topics or rules
+  handoverConditions    Json?    // triggers for human handover
+  isEnabled             Boolean  @default(true)
+  model                 String   @default("gpt-4o-mini")
+  temperature           Float    @default(0.4)
+  maxTokensPerResponse  Int      @default(350)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  tenant                Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+model KnowledgeDocument {
+  id           String           @id @default(uuid())
+  tenantId     String
+  title        String
+  docType      String           // FAQ, PDF, DOCX, URL, MANUAL
+  originalName String?
+  fileUrl      String?
+  rawText      String
+  status       String           @default("INDEXED") // PROCESSING, INDEXED, FAILED
+  chunkCount   Int              @default(0)
+  error        String?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  tenant       Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  chunks       KnowledgeChunk[]
+
+  @@index([tenantId])
+}
+
+model KnowledgeChunk {
+  id          String            @id @default(uuid())
+  documentId  String
+  tenantId    String
+  chunkIndex  Int
+  content     String
+  tokenCount  Int               @default(0)
+  embedding   Json?             // Array of float vector values
+  createdAt   DateTime          @default(now())
+
+  document    KnowledgeDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  tenant      Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([documentId])
+}
+
+model AiUsageLog {
+  id               String   @id @default(uuid())
+  tenantId         String
+  conversationId   String?
+  model            String
+  promptTokens     Int
+  completionTokens Int
+  totalTokens      Int
+  estimatedCostUsd Float
+  executionTimeMs  Int
+  intentDetected   String?
+  toolsUsed        Json?
+  createdAt        DateTime @default(now())
+
+  @@index([tenantId])
+  @@index([createdAt])
+}
+
+// ----------------------------------------------------
+// 5. APPOINTMENTS & SCHEDULING
+// ----------------------------------------------------
+
+enum AppointmentStatus {
+  SCHEDULED
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+  RESCHEDULED
+}
+
+model AppointmentService {
+  id              String        @id @default(uuid())
+  tenantId        String
+  name            String
+  description     String?
+  durationMinutes Int           @default(30)
+  price           Float         @default(0)
+  currency        String        @default("INR")
+  isActive        Boolean       @default(true)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  tenant          Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  appointments    Appointment[]
+
+  @@index([tenantId])
+}
+
+model AvailabilitySlot {
+  id        String   @id @default(uuid())
+  tenantId  String
+  dayOfWeek Int      // 0 = Sunday, 1 = Monday, ... 6 = Saturday
+  startTime String   // "09:00"
+  endTime   String   // "18:00"
+  isBreak   Boolean  @default(false)
+  isHoliday Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, dayOfWeek])
+}
+
+model Appointment {
+  id                   String             @id @default(uuid())
+  tenantId             String
+  customerId           String
+  serviceId            String
+  assignedUserId       String?
+  scheduledAt          DateTime
+  endAt                DateTime
+  durationMinutes      Int                @default(30)
+  status               AppointmentStatus  @default(CONFIRMED)
+  cancellationReason   String?
+  notes                String?
+  meetingLink          String?
+  location             String?
+  googleCalendarEventId String?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  tenant               Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  customer             Customer           @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  service              AppointmentService @relation(fields: [serviceId], references: [id])
+  assignedUser         User?              @relation(fields: [assignedUserId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, scheduledAt])
+  @@index([customerId])
+}
+
+// ----------------------------------------------------
+// 6. TASKS & FOLLOW-UPS
+// ----------------------------------------------------
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  OVERDUE
+  CANCELLED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+model Task {
+  id             String       @id @default(uuid())
+  tenantId       String
+  customerId     String?
+  leadId         String?
+  conversationId String?
+  assignedUserId String?
+  title          String
+  description    String?
+  priority       TaskPriority @default(MEDIUM)
+  status         TaskStatus   @default(PENDING)
+  dueDate        DateTime?
+  reminderAt     DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  tenant         Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  customer       Customer?     @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  lead           Lead?         @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  conversation   Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+  assignedUser   User?         @relation(fields: [assignedUserId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, status])
+  @@index([assignedUserId])
+}
+
+// ----------------------------------------------------
+// 7. VISUAL AUTOMATIONS & CAMPAIGNS
+// ----------------------------------------------------
+
+enum AutomationTriggerType {
+  NEW_MESSAGE
+  NEW_LEAD
+  LEAD_STAGE_CHANGED
+  APPOINTMENT_BOOKED
+  APPOINTMENT_CANCELLED
+  PAYMENT_RECEIVED
+  NO_RESPONSE_DELAY
+  SCHEDULED_TIME
+}
+
+model AutomationWorkflow {
+  id             String                @id @default(uuid())
+  tenantId       String
+  name           String
+  description    String?
+  triggerType    AutomationTriggerType
+  definition     Json                  // { nodes: [], edges: [] }
+  isActive       Boolean               @default(true)
+  executionCount Int                   @default(0)
+  lastExecutedAt DateTime?
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  tenant         Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  executions     WorkflowExecution[]
+
+  @@index([tenantId, isActive])
+}
+
+model WorkflowExecution {
+  id             String             @id @default(uuid())
+  workflowId     String
+  tenantId       String
+  triggerEvent   String
+  status         String             @default("SUCCESS") // SUCCESS, RUNNING, FAILED, RETRYING
+  stepsCompleted Json?
+  errorMessage   String?
+  startedAt      DateTime           @default(now())
+  completedAt    DateTime?
+
+  workflow       AutomationWorkflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  @@index([workflowId])
+}
+
+enum CampaignStatus {
+  DRAFT
+  SCHEDULED
+  SENDING
+  COMPLETED
+  CANCELLED
+}
+
+model Campaign {
+  id              String         @id @default(uuid())
+  tenantId        String
+  name            String
+  status          CampaignStatus @default(DRAFT)
+  templateId      String?
+  audienceFilter  Json?          // { tag: "vip", source: "WHATSAPP" }
+  totalRecipients Int            @default(0)
+  sentCount       Int            @default(0)
+  deliveredCount  Int            @default(0)
+  readCount       Int            @default(0)
+  failedCount     Int            @default(0)
+  scheduledAt     DateTime?
+  sentAt          DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  tenant          Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+}
+
+// ----------------------------------------------------
+// 8. BILLING & PAYMENTS (BUSINESS + SAAS)
+// ----------------------------------------------------
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  EXPIRED
+  REFUNDED
+}
+
+model PaymentRequest {
+  id                 String           @id @default(uuid())
+  tenantId           String
+  customerId         String
+  amount             Float
+  currency           String           @default("INR")
+  description        String?
+  invoiceNumber      String?
+  razorpayOrderId    String?
+  razorpayPaymentId  String?
+  razorpayPaymentLink String?
+  status             PaymentStatus    @default(PENDING)
+  expiresAt          DateTime?
+  paidAt             DateTime?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  tenant             Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  customer           Customer         @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  invoice            CustomerInvoice?
+
+  @@index([tenantId, status])
+  @@index([customerId])
+}
+
+model CustomerInvoice {
+  id               String          @id @default(uuid())
+  tenantId         String
+  customerId       String
+  paymentRequestId String?         @unique
+  invoiceNumber    String          @unique
+  subtotal         Float
+  taxGst           Float           @default(0) // 18% GST standard in India
+  totalAmount      Float
+  currency         String          @default("INR")
+  pdfUrl           String?
+  status           String          @default("PAID") // DRAFT, ISSUED, PAID, CANCELLED
+  issuedDate       DateTime        @default(now())
+  dueDate          DateTime?
+  items            Json            // [{ description, qty, unitPrice, amount }]
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  tenant           Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  customer         Customer        @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  paymentRequest   PaymentRequest? @relation(fields: [paymentRequestId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
+}
+
+// ----------------------------------------------------
+// 9. SUPER ADMIN & SUPPORT TICKETING
+// ----------------------------------------------------
+
+model SupportTicket {
+  id              String           @id @default(uuid())
+  tenantId        String?
+  userId          String?
+  subject         String
+  category        String           @default("GENERAL") // TECHNICAL, BILLING, WHATSAPP_API, GENERAL
+  priority        String           @default("MEDIUM")  // LOW, MEDIUM, HIGH, CRITICAL
+  status          String           @default("OPEN")    // OPEN, IN_PROGRESS, RESOLVED, CLOSED
+  assignedAdminId String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  tenant          Tenant?          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user            User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
+  messages        SupportMessage[]
+
+  @@index([tenantId])
+  @@index([status])
+}
+
+model SupportMessage {
+  id          String        @id @default(uuid())
+  ticketId    String
+  senderId    String
+  senderRole  UserRole
+  message     String
+  attachments Json?
+  createdAt   DateTime      @default(now())
+
+  ticket      SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId])
+}

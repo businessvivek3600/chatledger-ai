@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: nexaflow-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: codedev
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: nexaflow_db
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U codedev -d nexaflow_db']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: nexaflow-redis
+    restart: always
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/backend.Dockerfile
+    container_name: nexaflow-backend
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      PORT: 4000
+      NODE_ENV: production
+      DATABASE_URL: postgresql://codedev:password123@postgres:5432/nexaflow_db
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: nexaflow_jwt_access_secret_production_ready_key_98234710
+      JWT_REFRESH_SECRET: nexaflow_jwt_refresh_secret_production_ready_key_84920194
+      FRONTEND_URL: http://localhost:3000
+    ports:
+      - '4000:4000'
+
+  web:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/web.Dockerfile
+    container_name: nexaflow-web
+    restart: always
+    depends_on:
+      - backend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:4000/api/v1
+    ports:
+      - '3000:3000'
+
+volumes:
+  postgres_data:
+  redis_data:

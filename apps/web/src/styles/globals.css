@@ -1,0 +1,128 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Official White-First Enterprise SaaS Tokens */
+  --bg-primary: #F7F8FA;
+  --surface-main: #FFFFFF;
+  --sidebar-bg: #FFFFFF;
+  --primary-navy: #243B5A;
+  --primary-blue: #356AE6;
+  --secondary-blue: #6D8ED8;
+  --main-text: #202938;
+  --secondary-text: #707B8B;
+  --muted-text: #98A2B3;
+  --border-subtle: #E6EAF0;
+  --surface-subtle: #F2F4F7;
+  --success: #23865B;
+  --warning: #B98535;
+  --danger: #D64B50;
+  --info: #4775B8;
+
+  --background: 220 14% 97%;
+  --foreground: 222 24% 17%;
+  --border: 216 28% 92%;
+  --input: 216 28% 92%;
+  --ring: 221 78% 56%;
+}
+
+.dark {
+  --bg-primary: #0B0F19;
+  --surface-main: #111827;
+  --sidebar-bg: #0F172A;
+  --primary-navy: #0F172A;
+  --primary-blue: #4F84F8;
+  --secondary-blue: #81A6F8;
+  --main-text: #F8FAFC;
+  --secondary-text: #94A3B8;
+  --muted-text: #64748B;
+  --border-subtle: #1E293B;
+  --surface-subtle: #1E293B;
+  --success: #34D399;
+  --warning: #FBBF24;
+  --danger: #F87171;
+  --info: #60A5FA;
+
+  --background: 222 47% 6%;
+  --foreground: 210 40% 98%;
+  --border: 217 33% 17%;
+  --input: 217 33% 17%;
+  --ring: 221 78% 56%;
+}
+
+body {
+  color: var(--main-text);
+  background-color: var(--bg-primary);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Enterprise Card Utility */
+.enterprise-card {
+  background-color: var(--surface-main);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px 0 rgba(16, 24, 40, 0.05);
+}
+
+/* Enterprise Clean Buttons */
+.btn-primary {
+  background-color: #243B5A;
+  color: #FFFFFF;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 12px;
+  padding: 8px 16px;
+  transition: all 0.15s ease-in-out;
+}
+.btn-primary:hover {
+  background-color: #1A2B42;
+}
+.btn-primary:active {
+  transform: scale(0.99);
+}
+
+.btn-secondary {
+  background-color: #356AE6;
+  color: #FFFFFF;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 12px;
+  padding: 8px 16px;
+  transition: all 0.15s ease-in-out;
+}
+.btn-secondary:hover {
+  background-color: #2655C4;
+}
+
+.btn-outline {
+  background-color: #FFFFFF;
+  color: #202938;
+  border: 1px solid #E6EAF0;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 12px;
+  padding: 8px 16px;
+  transition: all 0.15s ease-in-out;
+}
+.btn-outline:hover {
+  background-color: #F7F8FA;
+  border-color: #D0D5DD;
+}
+
+/* Minimal Scrollbars */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #D0D5DD;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #98A2B3;
+}
