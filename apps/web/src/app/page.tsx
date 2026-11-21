@@ -23,6 +23,7 @@ import {
   Play,
 } from 'lucide-react';
 import { formatCurrency } from '../lib/utils';
+import ChatLedgerLogo, { ChatLedgerEmblem } from '../components/ChatLedgerLogo';
 
 export default function MarketingHomePage() {
   // Interactive Live AI Demo on Hero
@@ -87,17 +88,9 @@ export default function MarketingHomePage() {
       <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-teal-600 flex items-center justify-center text-white shadow-md shadow-teal-900/10 font-bold text-sm">
-              CL
-            </div>
-            <div>
-              <span className="text-xl font-extrabold tracking-tight text-slate-900">
-                ChatLedger<span className="text-teal-600">.AI</span>
-              </span>
-              <span className="hidden sm:inline-block ml-2 text-[10px] font-semibold tracking-wider text-teal-800 uppercase bg-teal-50 border border-teal-200 px-2 py-0.5 rounded">
-                WhatsApp Operations & UPI Ledger
-              </span>
-            </div>
+            <Link href="/" className="flex items-center">
+              <ChatLedgerLogo size="md" subtitle="Operations & UPI Ledger" />
+            </Link>
           </div>
 
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
@@ -830,7 +823,7 @@ export default function MarketingHomePage() {
       <footer className="bg-slate-900 text-slate-400 text-xs py-12 border-t border-slate-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
           <div>
-            <div className="text-sm font-bold text-white mb-3">ChatLedger AI</div>
+            <ChatLedgerLogo size="sm" inverted className="mb-3" />
             <p className="text-slate-400 text-xs leading-relaxed">
               Enterprise-grade WhatsApp-first AI operations, booking automation, and lead management SaaS.
             </p>

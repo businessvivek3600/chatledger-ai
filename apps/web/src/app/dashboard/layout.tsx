@@ -36,6 +36,7 @@ import {
 import { useAuthStore } from '../../lib/auth-store';
 import { apiRequest } from '../../lib/api';
 import { CommandPalette } from '../../components/CommandPalette';
+import ChatLedgerLogo, { ChatLedgerEmblem } from '../../components/ChatLedgerLogo';
 
 interface NavGroup {
   group: string;
@@ -148,26 +149,17 @@ export default function DashboardLayout({
         }`}
       >
         {/* Brand & Workspace Header */}
-        <div className="h-16 flex items-center justify-between px-4 border-b border-[#E6EAF0]">
+        <div className="h-16 flex items-center justify-between px-3.5 border-b border-[#E6EAF0]">
           {!sidebarCollapsed ? (
-            <Link href="/dashboard" className="flex items-center gap-2.5 min-w-0">
-              <div className="w-8 h-8 rounded-lg bg-[#243B5A] text-white flex items-center justify-center font-bold text-xs shadow-xs flex-shrink-0">
-                CL
-              </div>
-              <div className="min-w-0">
-                <span className="font-bold text-xs tracking-tight text-[#202938] block leading-tight truncate">
-                  ChatLedger<span className="text-[#356AE6]">.AI</span>
-                </span>
-                <span className="text-[10px] text-[#707B8B] font-medium block truncate max-w-[130px]">
-                  {tenantData?.name || user?.businessName || 'Workspace'}
-                </span>
-              </div>
+            <Link href="/dashboard" className="flex items-center min-w-0">
+              <ChatLedgerLogo
+                size="sm"
+                subtitle={tenantData?.name || user?.businessName || 'Workspace'}
+              />
             </Link>
           ) : (
-            <Link href="/dashboard" className="mx-auto">
-              <div className="w-8 h-8 rounded-lg bg-[#243B5A] text-white flex items-center justify-center font-bold text-xs shadow-xs">
-                CL
-              </div>
+            <Link href="/dashboard" className="mx-auto" title="ChatLedger AI">
+              <ChatLedgerEmblem size={28} />
             </Link>
           )}
 

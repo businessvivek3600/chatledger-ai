@@ -25,6 +25,7 @@ import { apiRequest } from '../../lib/api';
 import { useAuthStore } from '../../lib/auth-store';
 import { formatCurrency } from '../../lib/utils';
 import { UserRole } from '@nexaflow/shared-types';
+import ChatLedgerLogo from '../../components/ChatLedgerLogo';
 
 export default function SuperAdminConsolePage() {
   const router = useRouter();
@@ -97,22 +98,10 @@ export default function SuperAdminConsolePage() {
       {/* Super Admin Top Header */}
       <header className="h-16 bg-white border-b border-[#E6EAF0] px-6 flex items-center justify-between sticky top-0 z-40">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-[#243B5A] text-white font-bold flex items-center justify-center text-xs tracking-wider shadow-xs">
-            CL
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-sm tracking-tight text-[#202938]">
-                ChatLedger AI
-              </span>
-              <span className="text-[10px] font-bold text-[#356AE6] bg-[#356AE6]/10 px-2 py-0.5 rounded border border-[#356AE6]/20 uppercase">
-                Super Admin
-              </span>
-            </div>
-            <span className="text-[10px] text-[#707B8B] block">
-              Global Platform Governance & Ecosystem Telemetry
-            </span>
-          </div>
+          <ChatLedgerLogo size="sm" subtitle="Super Admin Console" />
+          <span className="text-[10px] font-bold text-[#356AE6] bg-[#356AE6]/10 px-2 py-0.5 rounded border border-[#356AE6]/20 uppercase">
+            Global Governance
+          </span>
         </div>
 
         <div className="flex items-center gap-3">

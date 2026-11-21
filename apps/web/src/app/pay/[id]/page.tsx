@@ -23,6 +23,7 @@ import {
   Sparkles,
   Phone,
 } from 'lucide-react';
+import ChatLedgerLogo from '../../../components/ChatLedgerLogo';
 
 export default function RazorpayCheckoutPage() {
   const params = useParams();
@@ -470,8 +471,9 @@ export default function RazorpayCheckoutPage() {
       </div>
 
       {/* Footer Info */}
-      <div className="mt-4 text-center text-xs text-slate-500 max-w-sm">
-        This is an official integrated Razorpay checkout session for ChatLedger AI enterprise operations.
+      <div className="mt-4 text-center text-xs text-slate-500 max-w-sm flex flex-col items-center gap-1.5">
+        <ChatLedgerLogo size="xs" inverted showText={true} />
+        <span>Official verified checkout session for ChatLedger AI operations.</span>
       </div>
     </div>
   );

@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { MessageSquare, Lock, Mail, Building2, Phone, ArrowRight, User } from 'lucide-react';
+import ChatLedgerLogo from '../../../components/ChatLedgerLogo';
 import { apiRequest } from '../../../lib/api';
 import { useAuthStore } from '../../../lib/auth-store';
 import { IndustryType } from '@nexaflow/shared-types';
@@ -55,13 +56,8 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen bg-[#F7F8FA] flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans text-[#202938]">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <Link href="/" className="inline-flex items-center gap-2 mb-3">
-          <div className="w-9 h-9 rounded-lg bg-[#243B5A] flex items-center justify-center text-white font-bold text-xs tracking-wider shadow-xs">
-            CL
-          </div>
-          <span className="text-xl font-bold tracking-tight text-[#202938]">
-            ChatLedger<span className="text-[#356AE6]">.AI</span>
-          </span>
+        <Link href="/" className="inline-flex items-center justify-center mb-3">
+          <ChatLedgerLogo size="lg" subtitle="14-Day Free Enterprise Trial" />
         </Link>
         <h2 className="text-xl font-bold text-[#202938] tracking-tight">
           Create Your Business Workspace

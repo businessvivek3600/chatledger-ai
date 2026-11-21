@@ -18,6 +18,7 @@ import {
 import { apiRequest } from '../../lib/api';
 import { useAuthStore } from '../../lib/auth-store';
 import { IndustryType } from '@nexaflow/shared-types';
+import ChatLedgerLogo from '../../components/ChatLedgerLogo';
 
 export default function OnboardingWizard() {
   const router = useRouter();
@@ -76,13 +77,8 @@ export default function OnboardingWizard() {
       <div className="max-w-2xl mx-auto w-full">
         {/* Progress Header */}
         <div className="text-center mb-6">
-          <div className="inline-flex items-center gap-2 mb-2">
-            <div className="w-8 h-8 rounded-lg bg-[#243B5A] text-white font-bold flex items-center justify-center text-xs tracking-wider shadow-xs">
-              CL
-            </div>
-            <span className="font-bold text-sm tracking-tight text-[#202938]">
-              ChatLedger AI Setup
-            </span>
+          <div className="flex justify-center mb-3">
+            <ChatLedgerLogo size="lg" subtitle="Workspace Initialization" />
           </div>
           <h1 className="text-xl font-bold text-[#202938]">
             Configure Your Business Workspace
