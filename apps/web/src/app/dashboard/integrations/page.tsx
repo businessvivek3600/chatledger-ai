@@ -14,8 +14,10 @@ import {
   Cpu,
 } from 'lucide-react';
 import { apiRequest } from '../../../lib/api';
+import { useLanguage } from '../../../i18n/LanguageContext';
 
 export default function IntegrationsPage() {
+  const { t } = useLanguage();
   const [tenant, setTenant] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -54,10 +56,10 @@ export default function IntegrationsPage() {
       <div>
         <h1 className="text-lg font-bold text-[#202938] tracking-tight flex items-center gap-2">
           <Puzzle className="w-5 h-5 text-[#356AE6]" />
-          Integrations & API Ecosystem
+          {t('integrations.title', 'Connected Integrations & Meta API')}
         </h1>
         <p className="text-xs text-[#707B8B]">
-          Connect your official Meta WhatsApp Business Cloud API, Razorpay UPI payment gateway, OpenAI LLM, and external calendars.
+          {t('integrations.subtitle', 'Manage Meta WhatsApp Cloud API credentials, Razorpay webhooks, and Google Calendar sync.')}
         </p>
       </div>
 

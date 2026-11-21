@@ -16,8 +16,10 @@ import {
 } from 'lucide-react';
 import { apiRequest } from '../../../lib/api';
 import { AutomationTriggerType } from '@nexaflow/shared-types';
+import { useLanguage } from '../../../i18n/LanguageContext';
 
 export default function AutomationsPage() {
+  const { t } = useLanguage();
   const [workflows, setWorkflows] = useState<any[]>([]);
   const [activeWorkflow, setActiveWorkflow] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
@@ -93,10 +95,10 @@ export default function AutomationsPage() {
         <div>
           <h1 className="text-lg font-bold text-[#202938] tracking-tight flex items-center gap-2">
             <Zap className="w-5 h-5 text-[#356AE6]" />
-            Visual Workflow Automation Studio
+            {t('automations.title', 'Visual Workflow Automation Studio')}
           </h1>
           <p className="text-xs text-[#707B8B]">
-            Configure multi-step WhatsApp triggers, conditional routing, auto-tagging, and follow-ups.
+            {t('automations.subtitle', 'Create drag-and-drop triggers, payment notifications, and automatic appointment reminders.')}
           </p>
         </div>
 
@@ -105,7 +107,7 @@ export default function AutomationsPage() {
           className="px-3.5 py-1.5 rounded-lg bg-[#243B5A] hover:bg-[#1A2B42] text-white font-semibold text-xs shadow-xs transition-all flex items-center gap-1.5"
         >
           <Plus className="w-3.5 h-3.5 text-white" />
-          Create Workflow
+          {t('automations.newWorkflow', 'Create Workflow')}
         </button>
       </div>
 

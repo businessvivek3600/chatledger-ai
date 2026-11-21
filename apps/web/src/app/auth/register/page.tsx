@@ -5,12 +5,15 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { MessageSquare, Lock, Mail, Building2, Phone, ArrowRight, User } from 'lucide-react';
 import ChatLedgerLogo from '../../../components/ChatLedgerLogo';
+import LanguageSwitcher from '../../../components/LanguageSwitcher';
+import { useLanguage } from '../../../i18n/LanguageContext';
 import { apiRequest } from '../../../lib/api';
 import { useAuthStore } from '../../../lib/auth-store';
 import { IndustryType } from '@nexaflow/shared-types';
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { t } = useLanguage();
   const setAuth = useAuthStore((s) => s.setAuth);
 
   const [businessName, setBusinessName] = useState('');
@@ -54,7 +57,12 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F7F8FA] flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans text-[#202938]">
+    <div className="min-h-screen bg-[#F7F8FA] flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans text-[#202938] relative">
+      {/* Top Language Switcher Bar */}
+      <div className="absolute top-4 right-4 sm:top-6 sm:right-6">
+        <LanguageSwitcher variant="compact" />
+      </div>
+
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
         <Link href="/" className="inline-flex items-center justify-center mb-3">
           <ChatLedgerLogo size="lg" subtitle="14-Day Free Enterprise Trial" />

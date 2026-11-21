@@ -12,8 +12,10 @@ import {
 import { apiRequest } from '../../../lib/api';
 import { formatCurrency } from '../../../lib/utils';
 import { SubscriptionPlanTier } from '@nexaflow/shared-types';
+import { useLanguage } from '../../../i18n/LanguageContext';
 
 export default function BillingPlansPage() {
+  const { t } = useLanguage();
   const [plans, setPlans] = useState<any[]>([]);
   const [currentSub, setCurrentSub] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
@@ -70,10 +72,10 @@ export default function BillingPlansPage() {
       <div>
         <h1 className="text-lg font-bold text-[#202938] tracking-tight flex items-center gap-2">
           <Receipt className="w-5 h-5 text-[#356AE6]" />
-          SaaS Subscription & Billing Management
+          {t('billing.title', 'SaaS Subscription & Billing Management')}
         </h1>
         <p className="text-xs text-[#707B8B]">
-          Manage your ChatLedger AI plan tier, usage quotas, team seat allocations, and renewal cycles.
+          {t('billing.subtitle', 'Manage your ChatLedger AI subscription tier, WhatsApp conversation quotas, and invoices.')}
         </p>
       </div>
 

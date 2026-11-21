@@ -2,10 +2,39 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/a
 
 let pendingDemoAuth: Promise<string | null> | null = null;
 
+export async function loginDemoUser(): Promise<string | null> {
+  if (typeof window === 'undefined') return null;
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: 'doctor.sharma@apexclinic.com',
+        password: 'Password123!',
+      }),
+    });
+    const json = await res.json();
+    if (json?.data?.accessToken) {
+      const t = json.data.accessToken;
+      const tid = json.data.user?.tenantId || '315cecc2-276f-4ce8-9340-a6cf93a90067';
+      localStorage.setItem('chatledger_token', t);
+      localStorage.setItem('nexaflow_token', t);
+      localStorage.setItem('chatledger_user', JSON.stringify(json.data.user));
+      localStorage.setItem('nexaflow_user', JSON.stringify(json.data.user));
+      localStorage.setItem('chatledger_tenant_id', tid);
+      localStorage.setItem('nexaflow_tenant_id', tid);
+      return t;
+    }
+  } catch (e) {
+    console.warn('Auto demo auth failed', e);
+  }
+  return null;
+}
+
 async function getOrInitToken(): Promise<{ token: string | null; tenantId: string | null }> {
   if (typeof window === 'undefined') return { token: null, tenantId: null };
-  const token = localStorage.getItem('nexaflow_token');
-  const tenantId = localStorage.getItem('nexaflow_tenant_id');
+  const token = localStorage.getItem('chatledger_token') || localStorage.getItem('nexaflow_token');
+  const tenantId = localStorage.getItem('chatledger_tenant_id') || localStorage.getItem('nexaflow_tenant_id');
 
   if (token) {
     return { token, tenantId };
@@ -13,44 +42,22 @@ async function getOrInitToken(): Promise<{ token: string | null; tenantId: strin
 
   // Auto-authenticate as seeded Doctor Sharma if user navigated straight to protected pages
   if (!pendingDemoAuth) {
-    pendingDemoAuth = (async () => {
-      try {
-        const res = await fetch(`${API_BASE_URL}/auth/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: 'doctor.sharma@apexclinic.com',
-            password: 'Password123!',
-          }),
-        });
-        const json = await res.json();
-        if (json?.data?.accessToken) {
-          const t = json.data.accessToken;
-          const tid = json.data.user?.tenantId || '315cecc2-276f-4ce8-9340-a6cf93a90067';
-          localStorage.setItem('nexaflow_token', t);
-          localStorage.setItem('nexaflow_user', JSON.stringify(json.data.user));
-          localStorage.setItem('nexaflow_tenant_id', tid);
-          return t;
-        }
-      } catch (e) {
-        console.warn('Auto demo auth failed', e);
-      } finally {
-        pendingDemoAuth = null;
-      }
-      return null;
-    })();
+    pendingDemoAuth = loginDemoUser().finally(() => {
+      pendingDemoAuth = null;
+    });
   }
 
   const newToken = await pendingDemoAuth;
   return {
-    token: newToken || localStorage.getItem('nexaflow_token'),
-    tenantId: localStorage.getItem('nexaflow_tenant_id'),
+    token: newToken || localStorage.getItem('chatledger_token') || localStorage.getItem('nexaflow_token'),
+    tenantId: localStorage.getItem('chatledger_tenant_id') || localStorage.getItem('nexaflow_tenant_id'),
   };
 }
 
 export async function apiRequest<T = any>(
   endpoint: string,
   options: RequestInit = {},
+  isRetry = false,
 ): Promise<T> {
   const isAuthEndpoint = endpoint.includes('/auth/login') || endpoint.includes('/auth/register');
   let token: string | null = null;
@@ -81,6 +88,16 @@ export async function apiRequest<T = any>(
     ...options,
     headers,
   });
+
+  // Handle 401 Unauthorized by clearing stale tokens and refreshing once
+  if (res.status === 401 && !isAuthEndpoint && !isRetry) {
+    localStorage.removeItem('chatledger_token');
+    localStorage.removeItem('nexaflow_token');
+    const freshToken = await loginDemoUser();
+    if (freshToken) {
+      return apiRequest<T>(endpoint, options, true);
+    }
+  }
 
   const json = await res.json().catch(() => ({}));
 

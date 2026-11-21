@@ -16,8 +16,10 @@ import {
 } from 'lucide-react';
 import { apiRequest } from '../../../lib/api';
 import { formatCurrency } from '../../../lib/utils';
+import { useLanguage } from '../../../i18n/LanguageContext';
 
 export default function CustomersDirectoryPage() {
+  const { t } = useLanguage();
   const [customers, setCustomers] = useState<any[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<any | null>(null);
   const [search, setSearch] = useState('');
@@ -65,10 +67,10 @@ export default function CustomersDirectoryPage() {
         <div>
           <h1 className="text-lg font-bold text-[#202938] tracking-tight flex items-center gap-2">
             <Users className="w-5 h-5 text-[#356AE6]" />
-            Customers 360° Directory
+            {t('customers.title', 'Customers 360° Directory')}
           </h1>
           <p className="text-xs text-[#707B8B]">
-            Unified customer profiles, visit history, lifetime value, and WhatsApp engagement.
+            {t('customers.subtitle', 'Comprehensive patient directories, lifetime value (LTV), transaction receipts, and WhatsApp message logs.')}
           </p>
         </div>
 

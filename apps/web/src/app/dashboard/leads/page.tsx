@@ -19,8 +19,10 @@ import {
 import { apiRequest } from '../../../lib/api';
 import { formatCurrency } from '../../../lib/utils';
 import { LeadStage, LeadPriority } from '@nexaflow/shared-types';
+import { useLanguage } from '../../../i18n/LanguageContext';
 
 export default function LeadsCrmPage() {
+  const { t } = useLanguage();
   const [kanbanData, setKanbanData] = useState<any>(null);
   const [leadsList, setLeadsList] = useState<any[]>([]);
   const [viewMode, setViewMode] = useState<'kanban' | 'table'>('kanban');
@@ -125,10 +127,10 @@ export default function LeadsCrmPage() {
         <div>
           <h1 className="text-lg font-bold text-[#202938] tracking-tight flex items-center gap-2">
             <TrendingUp className="w-5 h-5 text-[#356AE6]" />
-            Leads Pipeline & CRM
+            {t('leads.title', 'Leads & CRM Pipeline')}
           </h1>
           <p className="text-xs text-[#707B8B]">
-            Automated qualification, pipeline Kanban, and AI lead scoring for WhatsApp inquiries.
+            {t('leads.subtitle', 'Track prospective inquiries from WhatsApp, qualification scores, and deal conversion.')}
           </p>
         </div>
 
@@ -162,7 +164,7 @@ export default function LeadsCrmPage() {
             className="px-3.5 py-1.5 rounded-lg bg-[#243B5A] hover:bg-[#1A2B42] text-white font-semibold text-xs shadow-xs transition-all flex items-center gap-1.5"
           >
             <Plus className="w-3.5 h-3.5 text-white" />
-            Add Lead
+            {t('leads.addLead', 'Add Lead')}
           </button>
         </div>
       </div>

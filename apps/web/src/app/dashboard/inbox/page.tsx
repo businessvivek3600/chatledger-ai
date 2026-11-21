@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import {
   MessageSquare,
@@ -8,32 +8,32 @@ import {
   Bot,
   User,
   Send,
-  CheckCheck,
   Check,
+  CheckCheck,
   Clock,
+  RefreshCw,
+  ExternalLink,
+  ShieldCheck,
+  Tag,
+  Paperclip,
   Phone,
   Calendar,
   CreditCard,
-  Tag,
-  Paperclip,
-  Smile,
-  ShieldAlert,
   UserCheck,
-  Plus,
-  RefreshCw,
-  MoreVertical,
-  ExternalLink,
+  Sparkles,
 } from 'lucide-react';
 import { apiRequest } from '../../../lib/api';
-import { formatCurrency } from '../../../lib/utils';
 import {
   ConversationStatus,
   HandlingMode,
   MessageType,
   MessageSender,
 } from '@nexaflow/shared-types';
+import { formatCurrency } from '../../../lib/utils';
+import { useLanguage } from '../../../i18n/LanguageContext';
 
-export default function WhatsAppTeamInboxPage() {
+export default function WhatsAppInboxPage() {
+  const { t } = useLanguage();
   const [conversations, setConversations] = useState<any[]>([]);
   const [activeConvId, setActiveConvId] = useState<string | null>(null);
   const [activeConversation, setActiveConversation] = useState<any | null>(null);
@@ -50,7 +50,7 @@ export default function WhatsAppTeamInboxPage() {
 
   // Team Members for Assignment
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
-  const activeConvIdRef = React.useRef<string | null>(null);
+  const activeConvIdRef = useRef<string | null>(null);
 
   const fetchConversations = async () => {
     try {
@@ -62,6 +62,9 @@ export default function WhatsAppTeamInboxPage() {
       if (Array.isArray(res)) {
         setConversations(res);
         setActiveConvId((current) => {
+          if (activeConvIdRef.current && res.some((c) => c.id === activeConvIdRef.current)) {
+            return activeConvIdRef.current;
+          }
           if (current && res.some((c) => c.id === current)) {
             return current;
           }
@@ -160,12 +163,12 @@ export default function WhatsAppTeamInboxPage() {
     }
   };
 
-  const handleAssignAgent = async (agentId: string) => {
+  const handleAssignAgent = async (userId: string) => {
     if (!activeConvId) return;
     try {
       await apiRequest(`/conversations/${activeConvId}/assign`, {
         method: 'POST',
-        body: JSON.stringify({ assignedUserId: agentId }),
+        body: JSON.stringify({ userId: userId || null }),
       });
       await fetchActiveConversation(activeConvId);
       await fetchConversations();
@@ -185,12 +188,12 @@ export default function WhatsAppTeamInboxPage() {
           <div className="flex items-center justify-between mb-2.5">
             <h2 className="text-xs font-bold text-[#202938] uppercase tracking-wider flex items-center gap-1.5">
               <MessageSquare className="w-3.5 h-3.5 text-[#356AE6]" />
-              WhatsApp Shared Inbox
+              {t('inbox.title', 'WhatsApp Shared Inbox')}
             </h2>
             <button
               onClick={fetchConversations}
               className="p-1.5 text-[#707B8B] hover:text-[#202938] rounded-md hover:bg-[#F2F4F7] transition-colors"
-              title="Refresh inbox"
+              title={t('common.refresh', 'Refresh')}
             >
               <RefreshCw className="w-3.5 h-3.5" />
             </button>
@@ -200,7 +203,7 @@ export default function WhatsAppTeamInboxPage() {
             <Search className="w-3.5 h-3.5 text-[#98A2B3] absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Search phone, patient, or notes..."
+              placeholder={t('inbox.searchContacts', 'Search phone, patient, or notes...')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-[#E6EAF0] bg-[#F7F8FA] focus:bg-white focus:outline-none focus:border-[#356AE6]"
@@ -211,11 +214,11 @@ export default function WhatsAppTeamInboxPage() {
         {/* Filter Tabs */}
         <div className="flex items-center gap-1 p-2 bg-[#F7F8FA] border-b border-[#E6EAF0] overflow-x-auto text-[11px] font-semibold text-[#707B8B] scrollbar-none">
           {[
-            { id: 'all', label: 'All' },
-            { id: 'unassigned', label: 'Unassigned' },
-            { id: 'open', label: 'Open' },
-            { id: 'pending', label: 'Pending' },
-            { id: 'resolved', label: 'Resolved' },
+            { id: 'all', label: t('inbox.all', 'All') },
+            { id: 'unassigned', label: t('inbox.unassigned', 'Unassigned') },
+            { id: 'open', label: t('inbox.open', 'Open') },
+            { id: 'pending', label: t('inbox.pending', 'Pending') },
+            { id: 'resolved', label: t('inbox.resolved', 'Resolved') },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -265,7 +268,7 @@ export default function WhatsAppTeamInboxPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-0.5">
                       <span className="text-xs font-bold text-[#202938] truncate">
-                        {conv.customer?.name || 'Customer'}
+                        {conv.customer?.name || t('common.customer', 'Customer')}
                       </span>
                       <span className="text-[10px] text-[#98A2B3] whitespace-nowrap">
                         {new Date(conv.lastMessageAt).toLocaleTimeString([], {
@@ -287,7 +290,7 @@ export default function WhatsAppTeamInboxPage() {
                             : 'bg-[#B98535]/10 text-[#B98535]'
                         }`}
                       >
-                        {isAi ? 'AI Handled' : 'Human Handled'}
+                        {isAi ? t('inbox.aiHandledBadge', 'AI Handled') : t('inbox.humanHandledBadge', 'Human Handled')}
                       </span>
                       {conv.customer?.phone && (
                         <span className="text-[10px] text-[#98A2B3]">
@@ -323,9 +326,9 @@ export default function WhatsAppTeamInboxPage() {
                     </span>
                   </div>
                   <div className="text-[10px] text-[#707B8B] flex items-center gap-2">
-                    <span>Status: <strong className="uppercase text-[#202938]">{activeConversation.status}</strong></span>
+                    <span>{t('common.status', 'Status')}: <strong className="uppercase text-[#202938]">{activeConversation.status}</strong></span>
                     <span>•</span>
-                    <span>Assigned: <strong>{activeConversation.assignedUser?.fullName || 'Unassigned'}</strong></span>
+                    <span>{activeConversation.assignedUser?.fullName || t('inbox.unassignedEmployee', 'Unassigned')}</span>
                   </div>
                 </div>
               </div>
@@ -343,7 +346,7 @@ export default function WhatsAppTeamInboxPage() {
                     }`}
                   >
                     <Bot className="w-3.5 h-3.5" />
-                    AI Mode
+                    {t('inbox.aiMode', 'AI Mode')}
                   </button>
                   <button
                     onClick={() => handleToggleHandlingMode(HandlingMode.HUMAN)}
@@ -354,7 +357,7 @@ export default function WhatsAppTeamInboxPage() {
                     }`}
                   >
                     <User className="w-3.5 h-3.5" />
-                    Human Agent
+                    {t('inbox.humanAgent', 'Human Agent')}
                   </button>
                 </div>
 
@@ -364,7 +367,7 @@ export default function WhatsAppTeamInboxPage() {
                   onChange={(e) => handleAssignAgent(e.target.value)}
                   className="text-xs rounded-lg border border-[#E6EAF0] py-1.5 px-2 bg-white text-[#202938] focus:outline-none focus:border-[#356AE6]"
                 >
-                  <option value="">Assign Employee...</option>
+                  <option value="">{t('inbox.assignEmployee', 'Assign Employee...')}</option>
                   {teamMembers.map((m) => (
                     <option key={m.userId} value={m.userId}>
                       {m.user?.fullName} ({m.role})
@@ -386,7 +389,7 @@ export default function WhatsAppTeamInboxPage() {
                     <div key={msg.id} className="flex justify-center my-2">
                       <div className="bg-amber-50 border border-amber-200 text-amber-900 text-xs px-3.5 py-2 rounded-xl max-w-md shadow-xs">
                         <div className="font-bold text-[10px] text-amber-700 uppercase mb-0.5">
-                          📌 Internal Staff Note ({msg.senderUser?.fullName || 'Agent'})
+                          📌 {t('inbox.internalNote', 'Internal Note')} ({msg.senderUser?.fullName || 'Agent'})
                         </div>
                         {msg.content}
                       </div>
@@ -457,7 +460,7 @@ export default function WhatsAppTeamInboxPage() {
                 <div className="mb-2 px-3 py-1 bg-amber-50 border border-amber-200 rounded-lg text-[11px] text-amber-800 font-semibold flex items-center justify-between">
                   <span>Adding Internal Note (Customer will NOT see this on WhatsApp)</span>
                   <button onClick={() => setIsInternalNote(false)} className="text-amber-900 font-bold">
-                    Cancel
+                    {t('common.cancel', 'Cancel')}
                   </button>
                 </div>
               )}
@@ -473,7 +476,7 @@ export default function WhatsAppTeamInboxPage() {
                   }`}
                   title="Toggle Internal Team Note"
                 >
-                  Note
+                  {t('inbox.internalNote', 'Note')}
                 </button>
 
                 <input
@@ -481,7 +484,7 @@ export default function WhatsAppTeamInboxPage() {
                   placeholder={
                     isInternalNote
                       ? 'Write an internal staff note...'
-                      : 'Type a message to reply on WhatsApp...'
+                      : t('inbox.typeMessage', 'Type WhatsApp message or private note...')
                   }
                   value={inputMessage}
                   onChange={(e) => setInputMessage(e.target.value)}
@@ -494,7 +497,7 @@ export default function WhatsAppTeamInboxPage() {
                   className="px-4 py-2 rounded-lg bg-[#243B5A] hover:bg-[#1A2B42] text-white font-bold text-xs shadow-xs transition-all flex items-center gap-1.5 disabled:opacity-50"
                 >
                   <Send className="w-3.5 h-3.5" />
-                  <span>Send</span>
+                  <span>{t('inbox.send', 'Send')}</span>
                 </button>
               </form>
             </div>
@@ -535,20 +538,20 @@ export default function WhatsAppTeamInboxPage() {
           {/* Quick Actions */}
           <div className="space-y-1.5">
             <div className="text-[10px] font-bold text-[#98A2B3] uppercase tracking-wider">
-              Quick Operations
+              {t('inbox.quickOperations', 'QUICK OPERATIONS')}
             </div>
             <div className="grid grid-cols-2 gap-2 text-xs">
               <Link
                 href="/dashboard/appointments"
                 className="p-2 rounded-lg bg-[#F7F8FA] border border-[#E6EAF0] font-semibold text-[#202938] hover:bg-white text-center block transition-all"
               >
-                📅 Book Slot
+                📅 {t('inbox.bookSlot', 'Book Slot')}
               </Link>
               <Link
                 href="/dashboard/payments"
                 className="p-2 rounded-lg bg-[#F7F8FA] border border-[#E6EAF0] font-semibold text-[#202938] hover:bg-white text-center block transition-all"
               >
-                💳 Pay Link
+                💳 {t('inbox.payLink', 'Pay Link')}
               </Link>
             </div>
           </div>
@@ -556,10 +559,10 @@ export default function WhatsAppTeamInboxPage() {
           {/* Appointment History */}
           <div>
             <div className="text-[10px] font-bold text-[#98A2B3] uppercase tracking-wider mb-1.5">
-              Appointment History
+              {t('inbox.appointmentHistory', 'APPOINTMENT HISTORY')}
             </div>
             {activeConversation.customer?.appointments?.length === 0 ? (
-              <div className="text-[11px] text-[#707B8B]">No appointments recorded.</div>
+              <div className="text-[11px] text-[#707B8B]">{t('inbox.noAppointmentsRecorded', 'No appointments recorded')}</div>
             ) : (
               <div className="space-y-1.5">
                 {activeConversation.customer?.appointments?.map((apt: any) => (
@@ -584,7 +587,7 @@ export default function WhatsAppTeamInboxPage() {
           {/* Customer Tags */}
           <div>
             <div className="text-[10px] font-bold text-[#98A2B3] uppercase tracking-wider mb-1.5">
-              Tags & Segments
+              {t('inbox.tagsSegments', 'TAGS & SEGMENTS')}
             </div>
             <div className="flex flex-wrap gap-1">
               {(activeConversation.customer?.tags || ['patient', 'inquiry']).map(

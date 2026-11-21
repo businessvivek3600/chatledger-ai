@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import '../styles/globals.css';
+import { LanguageProvider } from '../i18n/LanguageContext';
 
 export const metadata: Metadata = {
   title: 'ChatLedger AI - WhatsApp AI Operations, Invoicing & Lead Management',
@@ -23,7 +24,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="min-h-screen antialiased bg-[#F7F8FA] text-[#202938]">
-        {children}
+        <LanguageProvider>{children}</LanguageProvider>
       </body>
     </html>
   );

@@ -13,8 +13,10 @@ import {
   Database,
 } from 'lucide-react';
 import { apiRequest } from '../../../lib/api';
+import { useLanguage } from '../../../i18n/LanguageContext';
 
 export default function KnowledgeBasePage() {
+  const { t } = useLanguage();
   const [documents, setDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -87,10 +89,10 @@ export default function KnowledgeBasePage() {
         <div>
           <h1 className="text-lg font-bold text-[#202938] tracking-tight flex items-center gap-2">
             <BookOpen className="w-5 h-5 text-[#356AE6]" />
-            Knowledge Base & RAG Memory
+            {t('knowledgeBase.title', 'Knowledge Base & Document Indexing (RAG)')}
           </h1>
           <p className="text-xs text-[#707B8B]">
-            Upload clinic FAQs, services, pricing matrices, and business rules referenced by ChatLedger AI on WhatsApp.
+            {t('knowledgeBase.subtitle', 'Upload clinic protocols, doctor fee schedules, and FAQs for instant AI retrieval.')}
           </p>
         </div>
 
@@ -99,7 +101,7 @@ export default function KnowledgeBasePage() {
           className="px-4 py-2 rounded-lg bg-[#243B5A] hover:bg-[#1a2d45] text-white font-semibold text-xs shadow-xs transition-all flex items-center gap-1.5"
         >
           <Plus className="w-4 h-4 text-white" />
-          Add Document / FAQs
+          {t('knowledgeBase.uploadDoc', 'Add Document / FAQs')}
         </button>
       </div>
 

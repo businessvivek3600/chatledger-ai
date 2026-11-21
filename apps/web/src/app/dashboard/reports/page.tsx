@@ -16,8 +16,10 @@ import {
 } from 'lucide-react';
 import { apiRequest } from '../../../lib/api';
 import { formatCurrency } from '../../../lib/utils';
+import { useLanguage } from '../../../i18n/LanguageContext';
 
 export default function ReportsAnalyticsPage() {
+  const { t } = useLanguage();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState('30d');
@@ -71,10 +73,10 @@ export default function ReportsAnalyticsPage() {
         <div>
           <h1 className="text-lg font-bold text-[#202938] tracking-tight flex items-center gap-2">
             <BarChart3 className="w-5 h-5 text-[#356AE6]" />
-            Business Intelligence & Analytics
+            {t('reports.title', 'Business Intelligence & Analytics')}
           </h1>
           <p className="text-xs text-[#707B8B]">
-            Real-time performance metrics, WhatsApp conversion funnels, AI resolution, and revenue attribution.
+            {t('reports.subtitle', 'Deep insights into patient acquisition costs, WhatsApp response times, and doctor utilization.')}
           </p>
         </div>
 

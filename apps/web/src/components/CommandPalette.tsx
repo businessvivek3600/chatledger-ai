@@ -19,6 +19,7 @@ import {
   X,
 } from 'lucide-react';
 import { apiRequest } from '../lib/api';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface CommandPaletteProps {
   isOpen: boolean;
@@ -27,6 +28,7 @@ interface CommandPaletteProps {
 
 export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
   const router = useRouter();
+  const { t } = useLanguage();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<{
     leads?: any[];
@@ -85,14 +87,14 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
   };
 
   const quickNav = [
-    { label: 'WhatsApp Inbox', path: '/dashboard/inbox', icon: MessageSquare, category: 'Navigation' },
-    { label: 'Leads & CRM Pipeline', path: '/dashboard/leads', icon: TrendingUp, category: 'Navigation' },
-    { label: 'Appointments Calendar', path: '/dashboard/appointments', icon: Calendar, category: 'Navigation' },
-    { label: 'AI Business Assistant', path: '/dashboard/ai-assistant', icon: Bot, category: 'Navigation' },
-    { label: 'Invoices & Payments', path: '/dashboard/payments', icon: CreditCard, category: 'Navigation' },
-    { label: 'Visual Automations Studio', path: '/dashboard/automations', icon: Zap, category: 'Navigation' },
-    { label: 'Broadcast Campaigns', path: '/dashboard/campaigns', icon: Send, category: 'Navigation' },
-    { label: 'Appearance & Themes', path: '/dashboard/settings', icon: Settings, category: 'Settings' },
+    { label: t('nav.inbox', 'WhatsApp Inbox'), path: '/dashboard/inbox', icon: MessageSquare },
+    { label: t('nav.leads', 'Leads & CRM Pipeline'), path: '/dashboard/leads', icon: TrendingUp },
+    { label: t('nav.appointments', 'Appointments Calendar'), path: '/dashboard/appointments', icon: Calendar },
+    { label: t('nav.aiAssistant', 'AI Business Assistant'), path: '/dashboard/ai-assistant', icon: Bot },
+    { label: t('nav.payments', 'Invoices & Payments'), path: '/dashboard/payments', icon: CreditCard },
+    { label: t('nav.automations', 'Visual Automations Studio'), path: '/dashboard/automations', icon: Zap },
+    { label: t('nav.campaigns', 'Broadcast Campaigns'), path: '/dashboard/campaigns', icon: Send },
+    { label: t('nav.settings', 'Appearance & Themes'), path: '/dashboard/settings', icon: Settings },
   ];
 
   return (
@@ -107,7 +109,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
           <input
             type="text"
             autoFocus
-            placeholder="Type a command or search leads, customers, modules..."
+            placeholder={t('header.searchPlaceholder', 'Type a command or search leads, customers, modules...')}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="flex-1 text-xs text-[#202938] placeholder-[#98A2B3] focus:outline-none bg-transparent"
@@ -128,7 +130,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
           {!query && (
             <div className="py-2">
               <div className="px-3 pb-1 text-[10px] font-bold text-[#98A2B3] uppercase tracking-wider">
-                Quick Navigation & Actions
+                {t('dashboard.quickActions', 'Quick Navigation & Actions')}
               </div>
               <div className="space-y-0.5">
                 {quickNav.map((item) => {
@@ -151,67 +153,68 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
             </div>
           )}
 
-          {/* Search Results */}
-          {query && (
-            <div className="py-2 space-y-3">
-              {/* Leads */}
+          {/* Searching Status */}
+          {isSearching && (
+            <div className="p-4 text-center text-xs text-[#707B8B]">
+              {t('common.loading', 'Searching across leads, customers, and operations...')}
+            </div>
+          )}
+
+          {/* Dynamic Search Results */}
+          {query && !isSearching && (
+            <>
+              {/* Leads Matches */}
               {results.leads && results.leads.length > 0 && (
-                <div>
+                <div className="py-2">
                   <div className="px-3 pb-1 text-[10px] font-bold text-[#98A2B3] uppercase tracking-wider">
-                    Matching Leads
+                    {t('nav.leads', 'Leads')}
                   </div>
                   {results.leads.map((l) => (
                     <button
                       key={l.id}
-                      onClick={() => navigateTo(`/dashboard/leads`)}
-                      className="w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-xs text-[#202938] hover:bg-[#F2F4F7] text-left"
+                      onClick={() => navigateTo('/dashboard/leads')}
+                      className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium text-[#202938] hover:bg-[#F2F4F7] transition-colors text-left"
                     >
                       <div>
-                        <div className="font-semibold">{l.name}</div>
-                        <div className="text-[10px] text-[#707B8B]">{l.phone} • Status: {l.status}</div>
+                        <div className="font-semibold">{l.fullName || l.contactPhone}</div>
+                        <div className="text-[10px] text-[#707B8B]">{l.contactPhone} • Status: {l.status}</div>
                       </div>
-                      <span className="text-[10px] font-semibold text-[#356AE6]">Open CRM →</span>
+                      <ArrowRight className="w-3 h-3 text-[#98A2B3]" />
                     </button>
                   ))}
                 </div>
               )}
 
-              {/* Customers */}
+              {/* Customers Matches */}
               {results.customers && results.customers.length > 0 && (
-                <div>
+                <div className="py-2">
                   <div className="px-3 pb-1 text-[10px] font-bold text-[#98A2B3] uppercase tracking-wider">
-                    Customers
+                    {t('nav.customers', 'Customers')}
                   </div>
                   {results.customers.map((c) => (
                     <button
                       key={c.id}
-                      onClick={() => navigateTo(`/dashboard/customers`)}
-                      className="w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-xs text-[#202938] hover:bg-[#F2F4F7] text-left"
+                      onClick={() => navigateTo('/dashboard/customers')}
+                      className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium text-[#202938] hover:bg-[#F2F4F7] transition-colors text-left"
                     >
                       <div>
                         <div className="font-semibold">{c.name}</div>
                         <div className="text-[10px] text-[#707B8B]">{c.phone}</div>
                       </div>
-                      <span className="text-[10px] font-semibold text-[#356AE6]">Customer 360 →</span>
+                      <ArrowRight className="w-3 h-3 text-[#98A2B3]" />
                     </button>
                   ))}
                 </div>
               )}
 
-              {/* Empty state */}
-              {!isSearching && (!results.leads || results.leads.length === 0) && (!results.customers || results.customers.length === 0) && (
-                <div className="text-center py-6 text-xs text-[#707B8B]">
-                  No records matching &ldquo;{query}&rdquo;
-                </div>
-              )}
-            </div>
+              {(!results.leads || results.leads.length === 0) &&
+                (!results.customers || results.customers.length === 0) && (
+                  <div className="p-4 text-center text-xs text-[#98A2B3]">
+                    No matches found for &ldquo;{query}&rdquo;
+                  </div>
+                )}
+            </>
           )}
-        </div>
-
-        {/* Footer info */}
-        <div className="px-4 py-2 bg-[#F7F8FA] border-t border-[#E6EAF0] flex items-center justify-between text-[11px] text-[#707B8B]">
-          <span>Tip: Use <kbd className="font-mono bg-white px-1 py-0.5 rounded border border-[#E6EAF0]">⌘K</kbd> anywhere</span>
-          <span>ChatLedger AI Command Engine</span>
         </div>
       </div>
     </div>

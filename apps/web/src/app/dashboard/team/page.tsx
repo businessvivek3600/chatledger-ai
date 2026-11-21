@@ -16,8 +16,10 @@ import {
 } from 'lucide-react';
 import { apiRequest } from '../../../lib/api';
 import { UserRole } from '@nexaflow/shared-types';
+import { useLanguage } from '../../../i18n/LanguageContext';
 
 export default function TeamManagementPage() {
+  const { t } = useLanguage();
   const [team, setTeam] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -82,10 +84,10 @@ export default function TeamManagementPage() {
         <div>
           <h1 className="text-lg font-bold text-[#202938] tracking-tight flex items-center gap-2">
             <Users className="w-5 h-5 text-[#356AE6]" />
-            Team Members & Staff Permissions
+            {t('team.title', 'Team Members & Staff Permissions')}
           </h1>
           <p className="text-xs text-[#707B8B]">
-            Manage staff accounts, role-based access control (RBAC), and employee response performance.
+            {t('team.subtitle', 'Manage clinic receptionists, doctors, billing managers, and enterprise permissions.')}
           </p>
         </div>
 
@@ -94,7 +96,7 @@ export default function TeamManagementPage() {
           className="px-4 py-2 rounded-lg bg-[#243B5A] hover:bg-[#1a2d45] text-white font-semibold text-xs shadow-xs transition-all flex items-center gap-1.5"
         >
           <Plus className="w-4 h-4 text-white" />
-          Invite Staff Member
+          {t('team.inviteMember', 'Invite Member')}
         </button>
       </div>
 

@@ -15,8 +15,10 @@ import {
 import { apiRequest } from '../../../lib/api';
 import { formatCurrency } from '../../../lib/utils';
 import { AppointmentStatus } from '@nexaflow/shared-types';
+import { useLanguage } from '../../../i18n/LanguageContext';
 
 export default function AppointmentsPage() {
+  const { t } = useLanguage();
   const [appointments, setAppointments] = useState<any[]>([]);
   const [services, setServices] = useState<any[]>([]);
   const [customers, setCustomers] = useState<any[]>([]);
@@ -140,10 +142,10 @@ export default function AppointmentsPage() {
         <div>
           <h1 className="text-lg font-bold text-[#202938] tracking-tight flex items-center gap-2">
             <Calendar className="w-5 h-5 text-[#356AE6]" />
-            Appointments & Doctor Schedule
+            {t('appointments.title', 'Appointments & Doctor Schedule')}
           </h1>
           <p className="text-xs text-[#707B8B]">
-            Real-time bookings synchronized with WhatsApp AI assistant with collision prevention.
+            {t('appointments.subtitle', 'Manage WhatsApp-scheduled appointments, patient check-ins, and doctor calendars.')}
           </p>
         </div>
 
@@ -159,7 +161,7 @@ export default function AppointmentsPage() {
             className="px-3.5 py-1.5 rounded-lg bg-[#243B5A] hover:bg-[#1A2B42] text-white font-semibold text-xs shadow-xs transition-colors flex items-center gap-1.5"
           >
             <Plus className="w-3.5 h-3.5 text-white" />
-            Book Slot
+            {t('appointments.bookAppointment', 'Book Slot')}
           </button>
         </div>
       </div>

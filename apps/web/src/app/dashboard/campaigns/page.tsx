@@ -15,8 +15,10 @@ import {
 } from 'lucide-react';
 import { apiRequest } from '../../../lib/api';
 import { CampaignStatus } from '@nexaflow/shared-types';
+import { useLanguage } from '../../../i18n/LanguageContext';
 
 export default function WhatsAppCampaignsPage() {
+  const { t } = useLanguage();
   const [campaigns, setCampaigns] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -91,10 +93,10 @@ export default function WhatsAppCampaignsPage() {
         <div>
           <h1 className="text-lg font-bold text-[#202938] tracking-tight flex items-center gap-2">
             <Megaphone className="w-5 h-5 text-[#356AE6]" />
-            WhatsApp Broadcast Campaigns
+            {t('campaigns.title', 'WhatsApp Broadcast Campaigns')}
           </h1>
           <p className="text-xs text-[#707B8B]">
-            Send Meta-approved template broadcasts to segmented leads, past patients, and customer groups.
+            {t('campaigns.subtitle', 'Send Meta-approved template broadcasts to segmented leads, past patients, and customer groups.')}
           </p>
         </div>
 
@@ -103,7 +105,7 @@ export default function WhatsAppCampaignsPage() {
           className="px-4 py-2 rounded-lg bg-[#243B5A] hover:bg-[#1a2d45] text-white font-semibold text-xs shadow-xs transition-all flex items-center gap-1.5"
         >
           <Plus className="w-4 h-4 text-white" />
-          New Campaign
+          {t('campaigns.newCampaign', 'New Campaign')}
         </button>
       </div>
 
@@ -112,135 +114,157 @@ export default function WhatsAppCampaignsPage() {
         <ShieldCheck className="w-4 h-4 text-[#23865B] flex-shrink-0 mt-0.5" />
         <div>
           <strong className="text-[#202938] font-bold block mb-0.5">
-            Meta WhatsApp Policy & Anti-Spam Compliance:
+            {t('campaigns.complianceNoticeTitle', 'Meta WhatsApp Policy & Anti-Spam Compliance:')}
           </strong>
           <p className="text-[#707B8B] text-[11px] leading-relaxed">
-            ChatLedger AI enforces pre-approved WhatsApp templates for all outbound broadcasts. Automatic opt-out triggers ('STOP' / 'UNSUBSCRIBE') are respected immediately.
+            {t('campaigns.complianceNoticeDesc', "ChatLedger AI enforces pre-approved WhatsApp templates for all outbound broadcasts. Automatic opt-out triggers ('STOP' / 'UNSUBSCRIBE') are respected immediately.")}
           </p>
         </div>
       </div>
 
-      {/* Campaigns Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {campaigns.length === 0 ? (
-          <div className="col-span-3 text-center py-16 bg-white rounded-xl border border-[#E6EAF0] text-xs text-[#98A2B3]">
-            No broadcast campaigns created yet.
-          </div>
-        ) : (
-          campaigns.map((camp) => (
+      {/* Campaigns List */}
+      {campaigns.length === 0 ? (
+        <div className="bg-white rounded-xl border border-[#E6EAF0] p-12 text-center shadow-xs">
+          <Megaphone className="w-8 h-8 text-[#98A2B3] mx-auto mb-3" />
+          <h3 className="text-sm font-bold text-[#202938]">{t('campaigns.title', 'No broadcast campaigns created yet')}</h3>
+          <p className="text-xs text-[#707B8B] mt-1 max-w-sm mx-auto">
+            Create your first compliant template broadcast to re-engage previous appointments or qualify leads.
+          </p>
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="mt-4 px-4 py-2 rounded-lg bg-[#356AE6] hover:bg-[#2855b8] text-white font-semibold text-xs transition-colors"
+          >
+            {t('campaigns.newCampaign', 'New Campaign')}
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {campaigns.map((camp) => (
             <div
               key={camp.id}
-              className="bg-white p-5 rounded-xl border border-[#E6EAF0] shadow-xs flex flex-col justify-between space-y-4"
+              className="bg-white rounded-xl border border-[#E6EAF0] p-4 shadow-xs flex flex-col justify-between"
             >
               <div>
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <h3 className="text-xs font-bold text-[#202938] leading-tight">
-                    {camp.name}
-                  </h3>
+                <div className="flex items-center justify-between mb-2">
                   <span
-                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                    className={`text-[10px] font-bold px-2 py-0.5 rounded ${
                       camp.status === CampaignStatus.COMPLETED
-                        ? 'bg-[#23865B]/10 text-[#23865B] border-[#23865B]/20'
-                        : 'bg-[#B98535]/10 text-[#B98535] border-[#B98535]/20'
+                        ? 'bg-[#23865B]/10 text-[#23865B]'
+                        : camp.status === CampaignStatus.SENDING
+                        ? 'bg-[#356AE6]/10 text-[#356AE6] animate-pulse'
+                        : 'bg-[#707B8B]/10 text-[#707B8B]'
                     }`}
                   >
                     {camp.status}
                   </span>
+                  <span className="text-[10px] text-[#98A2B3]">
+                    {new Date(camp.createdAt).toLocaleDateString()}
+                  </span>
                 </div>
 
-                <div className="text-[11px] text-[#707B8B] space-y-1">
-                  <div>Template: <strong className="text-[#202938]">{camp.templateId || 'General Broadcast'}</strong></div>
-                  <div>Target Audience: <strong>{camp.totalRecipients || 45} opted-in contacts</strong></div>
+                <h3 className="text-sm font-bold text-[#202938] mb-1">{camp.name}</h3>
+                <p className="text-xs text-[#707B8B] font-mono bg-[#F7F8FA] p-1.5 rounded border border-[#E6EAF0] mb-3 truncate">
+                  Template: {camp.templateId}
+                </p>
+
+                {/* Metrics */}
+                <div className="grid grid-cols-3 gap-2 text-center py-2 border-y border-[#E6EAF0] mb-3 text-xs">
+                  <div>
+                    <span className="text-[10px] text-[#707B8B] block">{t('campaigns.sent', 'Sent')}</span>
+                    <strong className="text-[#202938]">{camp.sentCount || 0}</strong>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-[#707B8B] block">{t('campaigns.delivered', 'Delivered')}</span>
+                    <strong className="text-[#23865B]">{camp.deliveredCount || 0}</strong>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-[#707B8B] block">{t('campaigns.read', 'Read')}</span>
+                    <strong className="text-[#356AE6]">{camp.readCount || 0}</strong>
+                  </div>
                 </div>
               </div>
 
-              {camp.status === CampaignStatus.COMPLETED ? (
-                <div className="grid grid-cols-3 gap-2 pt-3 border-t border-[#E6EAF0] text-center text-xs">
-                  <div className="bg-[#F7F8FA] p-2 rounded-lg border border-[#E6EAF0]">
-                    <span className="text-[10px] text-[#707B8B] block font-medium">Sent</span>
-                    <strong className="text-[#202938] font-bold">{camp.sentCount}</strong>
-                  </div>
-                  <div className="bg-[#F7F8FA] p-2 rounded-lg border border-[#E6EAF0]">
-                    <span className="text-[10px] text-[#707B8B] block font-medium">Delivered</span>
-                    <strong className="text-[#356AE6] font-bold">{camp.deliveredCount}</strong>
-                  </div>
-                  <div className="bg-[#F7F8FA] p-2 rounded-lg border border-[#E6EAF0]">
-                    <span className="text-[10px] text-[#707B8B] block font-medium">Read</span>
-                    <strong className="text-[#23865B] font-bold">{camp.readCount}</strong>
-                  </div>
-                </div>
-              ) : (
+              {camp.status === CampaignStatus.DRAFT && (
                 <button
                   onClick={() => handleLaunch(camp.id)}
-                  className="w-full py-2 rounded-lg bg-[#243B5A] hover:bg-[#1a2d45] text-white font-semibold text-xs shadow-xs transition-all flex items-center justify-center gap-1.5"
+                  className="w-full py-2 rounded-lg bg-[#243B5A] hover:bg-[#1a2d45] text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors"
                 >
-                  <Play className="w-3.5 h-3.5 fill-white" />
-                  Launch WhatsApp Broadcast
+                  <Play className="w-3.5 h-3.5 text-white" />
+                  {t('campaigns.launchBroadcast', 'Launch Broadcast')}
                 </button>
               )}
             </div>
-          ))
-        )}
-      </div>
+          ))}
+        </div>
+      )}
 
-      {/* Modal: New Campaign */}
+      {/* Modal: Create Campaign */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-[#202938]/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl p-5 max-w-md w-full shadow-lg border border-[#E6EAF0] space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-[#E6EAF0]">
-              <h3 className="text-sm font-bold text-[#202938]">Create WhatsApp Campaign</h3>
-              <button onClick={() => setIsModalOpen(false)} className="text-[#98A2B3] hover:text-[#202938]">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl border border-[#E6EAF0] max-w-md w-full p-5 shadow-xl space-y-4 animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between pb-2 border-b border-[#E6EAF0]">
+              <h2 className="text-sm font-bold text-[#202938]">
+                {t('campaigns.createModalTitle', 'Create WhatsApp Campaign')}
+              </h2>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="text-[#707B8B] hover:text-[#202938]"
+              >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {formError && (
-              <div className="mb-3 p-2.5 rounded-lg bg-[#D64B50]/10 border border-[#D64B50]/20 text-xs text-[#D64B50] flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 flex-shrink-0 text-[#D64B50]" />
+              <div className="p-2.5 rounded-lg bg-[#D64B50]/10 text-[#D64B50] text-xs font-semibold border border-[#D64B50]/20 flex items-center gap-1.5">
+                <AlertTriangle className="w-4 h-4 flex-shrink-0" />
                 <span>{formError}</span>
               </div>
             )}
 
-            <form onSubmit={handleCreateCampaign} className="space-y-3 text-xs">
+            <form onSubmit={handleCreateCampaign} className="space-y-4 text-xs">
               <div>
-                <label className="font-semibold text-[#202938]">Campaign Name *</label>
+                <label className="font-semibold text-[#202938] block mb-1">
+                  {t('campaigns.campaignName', 'Campaign Name')} *
+                </label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Weekend Dermatology Consultation Announcement"
+                  placeholder="e.g. Skin Consultation Follow-up Week 3"
                   value={campaignName}
                   onChange={(e) => setCampaignName(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-[#E6EAF0] px-3 py-2 text-xs text-[#202938] focus:outline-none focus:border-[#356AE6]"
+                  className="w-full rounded-lg border border-[#E6EAF0] px-3 py-2 text-xs focus:outline-none focus:border-[#356AE6]"
                 />
               </div>
 
               <div>
-                <label className="font-semibold text-[#202938]">Meta Approved Template</label>
+                <label className="font-semibold text-[#202938] block mb-1">
+                  {t('campaigns.metaTemplate', 'Meta Approved Template')}
+                </label>
                 <select
                   value={selectedTemplate}
                   onChange={(e) => setSelectedTemplate(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-[#E6EAF0] px-3 py-2 text-xs text-[#202938] bg-white focus:outline-none focus:border-[#356AE6]"
+                  className="w-full rounded-lg border border-[#E6EAF0] px-3 py-2 text-xs focus:outline-none focus:border-[#356AE6] bg-white"
                 >
                   <option value="appointment_confirmation_v1">appointment_confirmation_v1 (UTILITY)</option>
-                  <option value="payment_receipt_notice">payment_receipt_notice (UTILITY)</option>
-                  <option value="seasonal_wellness_reminder">seasonal_wellness_reminder (MARKETING)</option>
+                  <option value="seasonal_skin_checkup_promo">seasonal_skin_checkup_promo (MARKETING)</option>
+                  <option value="doctor_followup_reminder">doctor_followup_reminder (UTILITY)</option>
                 </select>
               </div>
 
-              <div className="pt-2 flex justify-end gap-2">
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#E6EAF0]">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 rounded-lg border border-[#E6EAF0] text-xs font-semibold text-[#707B8B] hover:bg-[#F2F4F7]"
+                  className="px-3 py-1.5 rounded-lg border border-[#E6EAF0] hover:bg-[#F7F8FA] text-[#707B8B] font-semibold text-xs"
                 >
-                  Cancel
+                  {t('common.cancel', 'Cancel')}
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-5 py-2 rounded-lg bg-[#243B5A] text-white font-semibold text-xs hover:bg-[#1a2d45] transition-all disabled:opacity-50 shadow-xs"
+                  className="px-4 py-1.5 rounded-lg bg-[#243B5A] hover:bg-[#1a2d45] text-white font-semibold text-xs disabled:opacity-50"
                 >
-                  {isSubmitting ? 'Creating...' : 'Create Campaign'}
+                  {isSubmitting ? t('common.creating', 'Creating...') : t('common.create', 'Create Campaign')}
                 </button>
               </div>
             </form>

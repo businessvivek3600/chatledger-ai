@@ -24,8 +24,10 @@ import {
 } from 'lucide-react';
 import { apiRequest } from '../../lib/api';
 import { formatCurrency } from '../../lib/utils';
+import { useLanguage } from '../../i18n/LanguageContext';
 
 export default function DashboardOverviewPage() {
+  const { t } = useLanguage();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState('7d');
@@ -102,14 +104,14 @@ export default function DashboardOverviewPage() {
           <div className="flex items-center gap-2 mb-1">
             <span className="w-2 h-2 rounded-full bg-[#23865B] animate-pulse"></span>
             <span className="text-[11px] font-semibold text-[#23865B] uppercase tracking-wider">
-              WhatsApp Cloud API Connected & AI Online
+              {t('nav.whatsappLive', 'WhatsApp Live')} • AI Online
             </span>
           </div>
           <h1 className="text-xl font-bold text-[#202938] tracking-tight">
-            Apex Multispecialty Clinic — Operations Overview
+            Apex Multispecialty Clinic — {t('dashboard.title', 'Operations Overview')}
           </h1>
           <p className="text-xs text-[#707B8B] mt-0.5">
-            Welcome back, Dr. Rajesh Sharma. Live patient inquiries, appointments, and UPI ledger performance.
+            {t('dashboard.subtitle', 'Real-time performance, WhatsApp lead conversions, and automated business metrics.')}
           </p>
         </div>
 
@@ -118,20 +120,20 @@ export default function DashboardOverviewPage() {
           {/* Date Range Selector */}
           <div className="flex items-center rounded-lg border border-[#E6EAF0] bg-[#F7F8FA] p-0.5 text-xs font-semibold">
             {[
-              { id: 'today', label: 'Today' },
-              { id: '7d', label: 'Last 7 Days' },
-              { id: '30d', label: 'This Month' },
-            ].map((t) => (
+              { id: 'today', label: t('common.today', 'Today') },
+              { id: '7d', label: '7 Days' },
+              { id: '30d', label: t('dashboard.dateRange', 'Last 30 Days') },
+            ].map((item) => (
               <button
-                key={t.id}
-                onClick={() => setDateRange(t.id)}
+                key={item.id}
+                onClick={() => setDateRange(item.id)}
                 className={`px-2.5 py-1 rounded-md transition-all ${
-                  dateRange === t.id
+                  dateRange === item.id
                     ? 'bg-white text-[#243B5A] shadow-xs font-bold'
                     : 'text-[#707B8B] hover:text-[#202938]'
                 }`}
               >
-                {t.label}
+                {item.label}
               </button>
             ))}
           </div>
@@ -142,12 +144,12 @@ export default function DashboardOverviewPage() {
             className="px-3 py-1.5 rounded-lg border border-[#E6EAF0] bg-white hover:bg-[#F7F8FA] text-xs font-semibold text-[#202938] flex items-center gap-1.5 transition-colors shadow-xs"
           >
             <Download className="w-3.5 h-3.5 text-[#707B8B]" />
-            <span>Export BI Report</span>
+            <span>{t('dashboard.exportReport', 'Export Report')}</span>
           </button>
 
           {exportNotice && (
             <span className="text-[11px] font-semibold text-[#23865B] animate-in fade-in">
-              ✓ Downloaded
+              ✓ {t('common.success', 'Success')}
             </span>
           )}
 
@@ -157,7 +159,7 @@ export default function DashboardOverviewPage() {
             className="px-3 py-1.5 rounded-lg bg-[#243B5A] hover:bg-[#1A2B42] text-white text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-xs"
           >
             <PhoneCall className="w-3.5 h-3.5 text-white" />
-            <span>Open Simulator</span>
+            <span>{t('nav.simulator', 'Open Phone Simulator')}</span>
           </Link>
         </div>
       </div>
@@ -167,45 +169,45 @@ export default function DashboardOverviewPage() {
         {/* Total Leads */}
         <div className="bg-white p-4 rounded-xl border border-[#E6EAF0] shadow-xs">
           <div className="flex items-center justify-between text-[#707B8B] text-[11px] font-semibold">
-            <span>Total Leads</span>
+            <span>{t('dashboard.totalLeads', 'Total Leads')}</span>
             <TrendingUp className="w-3.5 h-3.5 text-[#356AE6]" />
           </div>
           <div className="text-xl font-bold text-[#202938] mt-1.5">{kpis.totalLeads}</div>
           <div className="flex items-center gap-1 text-[11px] text-[#23865B] font-semibold mt-1">
             <ArrowUpRight className="w-3 h-3" />
-            <span>+25% vs last period</span>
+            <span>+25%</span>
           </div>
         </div>
 
         {/* Total Customers */}
         <div className="bg-white p-4 rounded-xl border border-[#E6EAF0] shadow-xs">
           <div className="flex items-center justify-between text-[#707B8B] text-[11px] font-semibold">
-            <span>Customers 360</span>
+            <span>{t('nav.customers', 'Customers 360')}</span>
             <Users className="w-3.5 h-3.5 text-[#4F46E5]" />
           </div>
           <div className="text-xl font-bold text-[#202938] mt-1.5">{kpis.totalCustomers}</div>
           <div className="flex items-center gap-1 text-[11px] text-[#23865B] font-semibold mt-1">
             <ArrowUpRight className="w-3 h-3" />
-            <span>+18% retained</span>
+            <span>+18%</span>
           </div>
         </div>
 
         {/* Active Conversations */}
         <div className="bg-white p-4 rounded-xl border border-[#E6EAF0] shadow-xs">
           <div className="flex items-center justify-between text-[#707B8B] text-[11px] font-semibold">
-            <span>WhatsApp Active</span>
+            <span>{t('dashboard.activeConversations', 'Active Conversations')}</span>
             <MessageSquare className="w-3.5 h-3.5 text-[#23865B]" />
           </div>
           <div className="text-xl font-bold text-[#202938] mt-1.5">{kpis.activeConversations}</div>
           <div className="text-[11px] text-[#B98535] font-semibold mt-1">
-            {kpis.unassignedConversations} require review
+            {kpis.unassignedConversations} {t('common.pending', 'Pending')}
           </div>
         </div>
 
         {/* AI Resolution Rate */}
         <div className="bg-white p-4 rounded-xl border border-[#E6EAF0] shadow-xs">
           <div className="flex items-center justify-between text-[#707B8B] text-[11px] font-semibold">
-            <span>AI Automated</span>
+            <span>{t('dashboard.aiHandled', 'AI Handled')}</span>
             <Bot className="w-3.5 h-3.5 text-[#356AE6]" />
           </div>
           <div className="text-xl font-bold text-[#202938] mt-1.5">
@@ -213,32 +215,32 @@ export default function DashboardOverviewPage() {
             <span className="text-xs font-normal text-[#707B8B] ml-1">/ {kpis.aiHandledConversations + kpis.humanHandledConversations}</span>
           </div>
           <div className="text-[11px] text-[#23865B] font-semibold mt-1">
-            82% automated resolution
+            82% {t('common.completed', 'Automated')}
           </div>
         </div>
 
         {/* Appointments Confirmed */}
         <div className="bg-white p-4 rounded-xl border border-[#E6EAF0] shadow-xs">
           <div className="flex items-center justify-between text-[#707B8B] text-[11px] font-semibold">
-            <span>Bookings</span>
+            <span>{t('dashboard.appointmentsBooked', 'Appointments')}</span>
             <Calendar className="w-3.5 h-3.5 text-[#243B5A]" />
           </div>
           <div className="text-xl font-bold text-[#202938] mt-1.5">{kpis.upcomingAppointments}</div>
           <div className="text-[11px] text-[#707B8B] font-semibold mt-1">
-            Next 7 days confirmed
+            {t('common.active', 'Confirmed')}
           </div>
         </div>
 
         {/* Revenue Collected */}
         <div className="bg-white p-4 rounded-xl border border-[#E6EAF0] shadow-xs">
           <div className="flex items-center justify-between text-[#707B8B] text-[11px] font-semibold">
-            <span>UPI Ledger Rev</span>
+            <span>{t('dashboard.revenue', 'Total Revenue')}</span>
             <CreditCard className="w-3.5 h-3.5 text-[#23865B]" />
           </div>
           <div className="text-xl font-bold text-[#202938] mt-1.5">{formatCurrency(kpis.totalRevenue)}</div>
           <div className="flex items-center gap-1 text-[11px] text-[#23865B] font-semibold mt-1">
             <ArrowUpRight className="w-3 h-3" />
-            <span>+34% via Razorpay</span>
+            <span>+34%</span>
           </div>
         </div>
       </div>
@@ -250,12 +252,12 @@ export default function DashboardOverviewPage() {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-xs font-bold text-[#202938] uppercase tracking-wider">
-                Lead Acquisition & WhatsApp Traffic Flow
+                {t('dashboard.leadAcquisitionTrend', 'Lead Acquisition & Conversion Trend')}
               </h3>
               <p className="text-xs text-[#707B8B]">Daily volume of inbound conversations vs verified qualified leads</p>
             </div>
             <span className="text-[11px] font-semibold text-[#707B8B] bg-[#F7F8FA] border border-[#E6EAF0] px-2.5 py-1 rounded-md">
-              7-Day Rolling Trend
+              7-Day Trend
             </span>
           </div>
 
@@ -292,11 +294,11 @@ export default function DashboardOverviewPage() {
           <div className="flex items-center justify-center gap-8 mt-4 text-xs font-medium text-[#707B8B]">
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-sm bg-[#6D8ED8]/60"></span>
-              <span>Inbound WhatsApp Traffic</span>
+              <span>{t('dashboard.whatsappVolume', 'WhatsApp Traffic')}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-sm bg-[#23865B]"></span>
-              <span>CRM Qualified Leads</span>
+              <span>{t('dashboard.qualifiedLeads', 'Qualified Leads')}</span>
             </div>
           </div>
         </div>
@@ -306,7 +308,7 @@ export default function DashboardOverviewPage() {
           <div>
             <div className="flex items-center justify-between mb-1">
               <h3 className="text-xs font-bold text-[#202938] uppercase tracking-wider">
-                Dr. Apex AI Accuracy
+                {t('dashboard.aiVsHuman', 'AI vs Human Handling')}
               </h3>
               <span className="text-xs font-bold text-[#23865B]">88% Automated</span>
             </div>
@@ -316,10 +318,10 @@ export default function DashboardOverviewPage() {
 
             <div className="space-y-3">
               {[
-                { label: 'Appointment Booking', pct: 48, color: 'bg-[#23865B]' },
-                { label: 'Pricing & Treatment Fees', pct: 30, color: 'bg-[#356AE6]' },
+                { label: t('appointments.bookAppointment', 'Appointment Booking'), pct: 48, color: 'bg-[#23865B]' },
+                { label: t('payments.title', 'Pricing & Treatment Fees'), pct: 30, color: 'bg-[#356AE6]' },
                 { label: 'Timings & Address Info', pct: 14, color: 'bg-[#4F46E5]' },
-                { label: 'Human Agent Handover', pct: 8, color: 'bg-[#B98535]' },
+                { label: t('inbox.humanAgent', 'Human Agent Handover'), pct: 8, color: 'bg-[#B98535]' },
               ].map((item, idx) => (
                 <div key={idx}>
                   <div className="flex justify-between text-xs font-semibold mb-1">
@@ -337,10 +339,10 @@ export default function DashboardOverviewPage() {
           <div className="mt-5 p-3 rounded-lg bg-[#F7F8FA] border border-[#E6EAF0]">
             <div className="text-xs font-bold text-[#202938] flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5 text-[#356AE6]" />
-              Knowledge Base RAG Active
+              {t('nav.knowledgeBase', 'Knowledge Base (RAG)')}
             </div>
             <p className="text-[11px] text-[#707B8B] mt-1 leading-relaxed">
-              3 documents indexed in PostgreSQL. Average response generation latency: 380ms.
+              3 documents indexed in PostgreSQL. Average response latency: 380ms.
             </p>
           </div>
         </div>
@@ -353,10 +355,10 @@ export default function DashboardOverviewPage() {
           <div className="flex items-center justify-between mb-3 pb-2 border-b border-[#E6EAF0]">
             <h3 className="text-xs font-bold text-[#202938] uppercase tracking-wider flex items-center gap-2">
               <Calendar className="w-4 h-4 text-[#243B5A]" />
-              Confirmed Doctor Appointments
+              {t('dashboard.upcomingAppointments', 'Upcoming Appointments')}
             </h3>
             <Link href="/dashboard/appointments" className="text-xs font-semibold text-[#356AE6] hover:underline">
-              View Calendar →
+              {t('dashboard.viewAll', 'View All')} →
             </Link>
           </div>
 
@@ -372,7 +374,7 @@ export default function DashboardOverviewPage() {
                 </div>
               </div>
               <span className="text-[10px] font-bold text-[#23865B] bg-[#23865B]/10 px-2 py-0.5 rounded-full border border-[#23865B]/20">
-                CONFIRMED
+                {t('common.active', 'CONFIRMED')}
               </span>
             </div>
 
@@ -387,7 +389,7 @@ export default function DashboardOverviewPage() {
                 </div>
               </div>
               <span className="text-[10px] font-bold text-[#23865B] bg-[#23865B]/10 px-2 py-0.5 rounded-full border border-[#23865B]/20">
-                CONFIRMED
+                {t('common.active', 'CONFIRMED')}
               </span>
             </div>
           </div>
@@ -398,10 +400,10 @@ export default function DashboardOverviewPage() {
           <div className="flex items-center justify-between mb-3 pb-2 border-b border-[#E6EAF0]">
             <h3 className="text-xs font-bold text-[#202938] uppercase tracking-wider flex items-center gap-2">
               <Clock className="w-4 h-4 text-[#B98535]" />
-              Pending Follow-ups & Action Items
+              {t('dashboard.pendingFollowUps', 'Pending Follow-ups')}
             </h3>
             <Link href="/dashboard/tasks" className="text-xs font-semibold text-[#356AE6] hover:underline">
-              All Tasks →
+              {t('dashboard.viewAll', 'All Tasks')} →
             </Link>
           </div>
 
@@ -412,7 +414,7 @@ export default function DashboardOverviewPage() {
                 <div className="text-[11px] text-[#707B8B]">Assigned: Reception Team</div>
               </div>
               <span className="text-[10px] font-bold text-[#B98535] bg-[#B98535]/10 px-2 py-0.5 rounded-full border border-[#B98535]/20">
-                HIGH PRIORITY
+                HIGH
               </span>
             </div>
 
@@ -422,7 +424,7 @@ export default function DashboardOverviewPage() {
                 <div className="text-[11px] text-[#707B8B]">Assigned: Dr. Rajesh Sharma</div>
               </div>
               <span className="text-[10px] font-bold text-[#356AE6] bg-[#356AE6]/10 px-2 py-0.5 rounded-full border border-[#356AE6]/20">
-                IN PROGRESS
+                {t('common.pending', 'IN PROGRESS')}
               </span>
             </div>
           </div>

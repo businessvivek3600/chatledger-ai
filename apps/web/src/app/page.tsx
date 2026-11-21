@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { formatCurrency } from '../lib/utils';
 import ChatLedgerLogo, { ChatLedgerEmblem } from '../components/ChatLedgerLogo';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
 export default function MarketingHomePage() {
   // Interactive Live AI Demo on Hero
@@ -105,6 +106,7 @@ export default function MarketingHomePage() {
           </nav>
 
           <div className="flex items-center gap-3">
+            <LanguageSwitcher variant="compact" />
             <Link
               href="/auth/login"
               className="text-sm font-semibold text-slate-700 hover:text-slate-900 px-3 py-2 rounded-lg hover:bg-slate-100 transition-colors"

@@ -15,6 +15,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { apiRequest } from '../../../lib/api';
+import { useLanguage } from '../../../i18n/LanguageContext';
 
 const DEFAULT_CONFIG = {
   name: 'Dr. Apex AI',
@@ -29,6 +30,7 @@ const DEFAULT_CONFIG = {
 };
 
 export default function AiAssistantConfigPage() {
+  const { t } = useLanguage();
   const [config, setConfig] = useState<any>(DEFAULT_CONFIG);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -102,7 +104,7 @@ export default function AiAssistantConfigPage() {
         {
           role: 'assistant',
           content: res?.reply || 'Received prompt successfully.',
-          tools: res?.toolsExecuted,
+          tools: Array.isArray(res?.toolsExecuted) ? res.toolsExecuted : undefined,
         },
       ]);
     } catch (err: any) {
@@ -118,7 +120,7 @@ export default function AiAssistantConfigPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#356AE6]"></div>
       </div>
     );
   }
@@ -128,19 +130,19 @@ export default function AiAssistantConfigPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-            <Bot className="w-5 h-5 text-sky-600" />
-            AI Business Assistant Configuration & Playground
+          <h1 className="text-xl font-black text-[#202938] tracking-tight flex items-center gap-2">
+            <Bot className="w-5 h-5 text-[#356AE6]" />
+            {t('aiAssistant.title', 'AI Business Assistant Configuration & Playground')}
           </h1>
-          <p className="text-xs text-slate-500">
-            Tune the personality, business knowledge, and real-time tool calling rules for your WhatsApp assistant.
+          <p className="text-xs text-[#707B8B]">
+            {t('aiAssistant.subtitle', 'Tune the personality, business knowledge, and real-time tool calling rules for your WhatsApp assistant.')}
           </p>
         </div>
 
         {savedSuccess && (
-          <div className="px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200 flex items-center gap-1.5">
+          <div className="px-3 py-1.5 rounded-xl bg-[#23865B]/10 text-[#23865B] text-xs font-bold border border-[#23865B]/20 flex items-center gap-1.5 animate-in fade-in">
             <CheckCircle2 className="w-4 h-4" />
-            Assistant updated & deployed live!
+            {t('aiAssistant.assistantUpdated', 'Assistant updated & deployed live!')}
           </div>
         )}
       </div>
@@ -151,81 +153,84 @@ export default function AiAssistantConfigPage() {
         {/* ======================================================== */}
         <form onSubmit={handleSave} className="lg:col-span-7 space-y-5">
           {/* Card 1: Personality & Tone */}
-          <div className="bg-white p-6 rounded-3xl border border-slate-200/90 shadow-xs space-y-4">
-            <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
-              <Sliders className="w-4 h-4 text-sky-600" />
-              <h2 className="text-sm font-bold text-slate-900">Personality & Response Rules</h2>
+          <div className="bg-white p-6 rounded-2xl border border-[#E6EAF0] shadow-xs space-y-4">
+            <div className="flex items-center gap-2 pb-2 border-b border-[#E6EAF0]">
+              <Sliders className="w-4 h-4 text-[#356AE6]" />
+              <h2 className="text-xs font-bold uppercase tracking-wider text-[#202938]">
+                {t('aiAssistant.personalityTone', 'Personality & Response Rules')}
+              </h2>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
               <div>
-                <label className="font-semibold text-slate-700">Assistant Name</label>
+                <label className="font-semibold text-[#202938]">{t('aiAssistant.assistantName', 'Assistant Name')}</label>
                 <input
                   type="text"
                   value={config?.name || ''}
                   onChange={(e) => setConfig({ ...config, name: e.target.value })}
-                  className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-xs"
+                  className="mt-1 w-full rounded-xl border border-[#E6EAF0] px-3 py-2 text-xs focus:outline-none focus:border-[#356AE6]"
                 />
               </div>
 
               <div>
-                <label className="font-semibold text-slate-700">Response Tone</label>
+                <label className="font-semibold text-[#202938]">{t('aiAssistant.responseTone', 'Response Tone')}</label>
                 <input
                   type="text"
                   value={config?.tone || ''}
                   onChange={(e) => setConfig({ ...config, tone: e.target.value })}
                   placeholder="e.g. Warm Professional & Reassuring"
-                  className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-xs"
+                  className="mt-1 w-full rounded-xl border border-[#E6EAF0] px-3 py-2 text-xs focus:outline-none focus:border-[#356AE6]"
                 />
               </div>
 
               <div className="sm:col-span-2">
-                <label className="font-semibold text-slate-700">Personality Directive</label>
+                <label className="font-semibold text-[#202938]">{t('aiAssistant.personalityDirective', 'Personality Directive')}</label>
                 <input
                   type="text"
                   value={config?.personality || ''}
                   onChange={(e) => setConfig({ ...config, personality: e.target.value })}
-                  className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-xs"
+                  className="mt-1 w-full rounded-xl border border-[#E6EAF0] px-3 py-2 text-xs focus:outline-none focus:border-[#356AE6]"
                 />
               </div>
 
               <div className="sm:col-span-2">
-                <label className="font-semibold text-slate-700">Business Introduction Overview</label>
+                <label className="font-semibold text-[#202938]">{t('aiAssistant.businessIntro', 'Business Introduction Overview')}</label>
                 <textarea
                   rows={3}
                   value={config?.businessIntro || ''}
                   onChange={(e) => setConfig({ ...config, businessIntro: e.target.value })}
-                  className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-xs leading-relaxed"
+                  className="mt-1 w-full rounded-xl border border-[#E6EAF0] px-3 py-2 text-xs leading-relaxed focus:outline-none focus:border-[#356AE6]"
                 />
               </div>
             </div>
           </div>
 
           {/* Card 2: AI Safety & Handover Guardrails */}
-          <div className="bg-white p-6 rounded-3xl border border-slate-200/90 shadow-xs space-y-4">
-            <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
-              <ShieldCheck className="w-4 h-4 text-emerald-600" />
-              <h2 className="text-sm font-bold text-slate-900">Safety Safeguards & Human Handover</h2>
+          <div className="bg-white p-6 rounded-2xl border border-[#E6EAF0] shadow-xs space-y-4">
+            <div className="flex items-center gap-2 pb-2 border-b border-[#E6EAF0]">
+              <ShieldCheck className="w-4 h-4 text-[#23865B]" />
+              <h2 className="text-xs font-bold uppercase tracking-wider text-[#202938]">
+                {t('aiAssistant.safeguards', 'Safety Safeguards & Human Handover')}
+              </h2>
             </div>
 
             <div className="space-y-3 text-xs">
-              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-1">
-                <div className="font-bold text-slate-800">Verified Guardrails:</div>
-                <div className="text-[11px] text-slate-600 leading-relaxed">
-                  ✓ Strict Anti-Hallucination: Assistant only cites prices and availability from indexed knowledge chunks.
+              <div className="p-3 rounded-xl bg-[#F7F8FA] border border-[#E6EAF0] space-y-1">
+                <div className="text-[11px] text-[#707B8B] leading-relaxed">
+                  ✓ {t('aiAssistant.strictAntiHallucination', 'Strict Anti-Hallucination: Assistant only cites prices and availability from indexed knowledge chunks.')}
                   <br />
-                  ✓ Emergency Medical Escalation: Urgent symptom phrases trigger immediate referral and staff alerts.
+                  ✓ {t('aiAssistant.emergencyEscalation', 'Emergency Medical Escalation: Urgent symptom phrases trigger immediate referral and staff alerts.')}
                   <br />
-                  ✓ 1-Click Handover: Handover triggers pause automatic AI replies for assigned agents.
+                  ✓ {t('aiAssistant.oneClickHandover', '1-Click Handover: Handover triggers pause automatic AI replies for assigned agents.')}
                 </div>
               </div>
 
               <div>
-                <label className="font-semibold text-slate-700">Human Handover Trigger Keywords</label>
+                <label className="font-semibold text-[#202938]">{t('aiAssistant.handoverKeywords', 'Human Handover Trigger Keywords')}</label>
                 <input
                   type="text"
                   defaultValue="human, agent, speak to doctor, operator, call me, emergency"
-                  className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-xs text-slate-600"
+                  className="mt-1 w-full rounded-xl border border-[#E6EAF0] px-3 py-2 text-xs text-[#707B8B]"
                 />
               </div>
             </div>
@@ -235,10 +240,10 @@ export default function AiAssistantConfigPage() {
             <button
               type="submit"
               disabled={saving}
-              className="px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-md transition-all flex items-center gap-1.5"
+              className="px-6 py-2.5 rounded-xl bg-[#243B5A] hover:bg-[#1A2B42] text-white font-bold text-xs shadow-md transition-all flex items-center gap-1.5"
             >
-              <Save className="w-4 h-4 text-emerald-400" />
-              {saving ? 'Saving...' : 'Save AI Configuration'}
+              <Save className="w-4 h-4 text-[#2DD4BF]" />
+              {saving ? t('common.saving', 'Saving...') : t('aiAssistant.saveConfig', 'Save AI Configuration')}
             </button>
           </div>
         </form>
@@ -246,20 +251,20 @@ export default function AiAssistantConfigPage() {
         {/* ======================================================== */}
         {/* RIGHT 5 COLS: INTERACTIVE TEST PLAYGROUND */}
         {/* ======================================================== */}
-        <div className="lg:col-span-5 bg-white rounded-3xl border border-slate-200/90 shadow-xs flex flex-col h-[600px] overflow-hidden">
+        <div className="lg:col-span-5 bg-white rounded-2xl border border-[#E6EAF0] shadow-xs flex flex-col h-[600px] overflow-hidden">
           {/* Playground Header */}
-          <div className="p-4 border-b border-slate-200/80 bg-slate-50/70 flex items-center justify-between">
+          <div className="p-4 border-b border-[#E6EAF0] bg-[#F7F8FA] flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              <h3 className="text-xs font-extrabold text-slate-900">Live AI Assistant Test Playground</h3>
+              <span className="w-2.5 h-2.5 rounded-full bg-[#23865B] animate-pulse"></span>
+              <h3 className="text-xs font-extrabold text-[#202938]">{t('aiAssistant.testPlayground', 'Live AI Assistant Test Playground')}</h3>
             </div>
-            <span className="text-[10px] font-bold bg-slate-200 text-slate-700 px-2 py-0.5 rounded">
-              Model: {config?.model || 'gpt-4o-mini'}
+            <span className="text-[10px] font-bold bg-[#E6EAF0] text-[#243B5A] px-2 py-0.5 rounded">
+              {t('aiAssistant.model', 'Model')}: {config?.model || 'gpt-4o-mini'}
             </span>
           </div>
 
           {/* Test Messages Stream */}
-          <div className="flex-1 p-4 overflow-y-auto space-y-3 bg-slate-50/30">
+          <div className="flex-1 p-4 overflow-y-auto space-y-3 bg-[#F7F8FA]/50">
             {testChat.map((msg, i) => (
               <div
                 key={i}
@@ -268,23 +273,23 @@ export default function AiAssistantConfigPage() {
                 <div
                   className={`max-w-[85%] rounded-2xl p-3 text-xs leading-relaxed shadow-xs ${
                     msg.role === 'user'
-                      ? 'bg-sky-600 text-white rounded-tr-none'
-                      : 'bg-white text-slate-900 border border-slate-200/80 rounded-tl-none'
+                      ? 'bg-[#356AE6] text-white rounded-tr-none'
+                      : 'bg-white text-[#202938] border border-[#E6EAF0] rounded-tl-none'
                   }`}
                 >
                   <div className="whitespace-pre-wrap">{msg.content}</div>
 
                   {/* Render Tool Executions Badge */}
-                  {msg.tools && msg.tools.length > 0 && (
-                    <div className="mt-2 pt-2 border-t border-slate-100 space-y-1">
+                  {Array.isArray(msg.tools) && msg.tools.length > 0 && (
+                    <div className="mt-2 pt-2 border-t border-black/10 space-y-1">
                       {msg.tools.map((t, idx) => (
                         <div
                           key={idx}
-                          className="p-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-[10px] font-mono text-emerald-900"
+                          className="p-1.5 rounded-lg bg-[#23865B]/10 border border-[#23865B]/20 text-[10px] font-mono text-[#23865B]"
                         >
-                          ⚡ <strong>Tool:</strong> {t.tool}
+                          ⚡ <strong>Tool:</strong> {t?.tool || 'Action'}
                           <br />
-                          Result: {JSON.stringify(t.result).substring(0, 70)}...
+                          Result: {typeof t?.result === 'object' ? JSON.stringify(t.result).substring(0, 70) : String(t?.result || '')}...
                         </div>
                       ))}
                     </div>
@@ -295,27 +300,27 @@ export default function AiAssistantConfigPage() {
 
             {testing && (
               <div className="flex justify-start">
-                <div className="bg-white rounded-2xl p-2.5 text-xs text-slate-500 border border-slate-200 flex items-center gap-2 shadow-xs">
-                  <Bot className="w-4 h-4 text-sky-600 animate-spin" />
-                  <span>Checking availability & retrieving knowledge...</span>
+                <div className="bg-white rounded-2xl p-2.5 text-xs text-[#707B8B] border border-[#E6EAF0] flex items-center gap-2 shadow-xs">
+                  <Bot className="w-4 h-4 text-[#356AE6] animate-spin" />
+                  <span>{t('aiAssistant.checkingAvailability', 'Checking availability & retrieving knowledge...')}</span>
                 </div>
               </div>
             )}
           </div>
 
           {/* Playground Input */}
-          <form onSubmit={handleTestSubmit} className="p-3 bg-white border-t border-slate-200 flex items-center gap-2">
+          <form onSubmit={handleTestSubmit} className="p-3 bg-white border-t border-[#E6EAF0] flex items-center gap-2">
             <input
               type="text"
-              placeholder="Ask anything (e.g., 'Book Dr. Ananya tomorrow at 2:30pm')..."
+              placeholder={t('aiAssistant.askAnythingPlaceholder', "Ask anything (e.g., 'Book Dr. Ananya tomorrow at 2:30pm')...")}
               value={testPrompt}
               onChange={(e) => setTestPrompt(e.target.value)}
-              className="flex-1 text-xs rounded-xl border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500"
+              className="flex-1 text-xs rounded-xl border border-[#E6EAF0] px-3 py-2 focus:outline-none focus:border-[#356AE6]"
             />
             <button
               type="submit"
               disabled={testing || !testPrompt.trim()}
-              className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white transition-all disabled:opacity-50"
+              className="p-2 rounded-xl bg-[#243B5A] hover:bg-[#1A2B42] text-white transition-all disabled:opacity-50"
             >
               <Send className="w-4 h-4" />
             </button>

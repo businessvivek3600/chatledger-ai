@@ -14,8 +14,10 @@ import {
 } from 'lucide-react';
 import { apiRequest } from '../../../lib/api';
 import { TaskStatus, TaskPriority } from '@nexaflow/shared-types';
+import { useLanguage } from '../../../i18n/LanguageContext';
 
 export default function TasksPage() {
+  const { t } = useLanguage();
   const [tasks, setTasks] = useState<any[]>([]);
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -115,10 +117,10 @@ export default function TasksPage() {
         <div>
           <h1 className="text-lg font-bold text-[#202938] tracking-tight flex items-center gap-2">
             <CheckSquare className="w-5 h-5 text-[#356AE6]" />
-            Task Management & Follow-ups
+            {t('tasks.title', 'Task Management & Follow-ups')}
           </h1>
           <p className="text-xs text-[#707B8B]">
-            Automated WhatsApp lead follow-ups, consultation reminders, and team action items.
+            {t('tasks.subtitle', 'Organize staff tasks, clinical follow-ups, and customer re-engagement activities.')}
           </p>
         </div>
 
@@ -127,7 +129,7 @@ export default function TasksPage() {
           className="px-4 py-2 rounded-lg bg-[#243B5A] hover:bg-[#1a2d45] text-white font-semibold text-xs transition-all flex items-center gap-1.5 shadow-xs"
         >
           <Plus className="w-4 h-4 text-white" />
-          Create Task
+          {t('tasks.addTask', 'Create Task')}
         </button>
       </div>
 

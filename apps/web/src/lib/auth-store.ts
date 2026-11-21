@@ -26,31 +26,38 @@ export const useAuthStore = create<AuthState>((set) => ({
   token: null,
   isAuthenticated: false,
   setAuth: (user, token, tenantId) => {
+    localStorage.setItem('chatledger_token', token);
     localStorage.setItem('nexaflow_token', token);
+    localStorage.setItem('chatledger_user', JSON.stringify(user));
     localStorage.setItem('nexaflow_user', JSON.stringify(user));
-    if (tenantId || user.tenantId) {
-      localStorage.setItem('nexaflow_tenant_id', tenantId || user.tenantId || '');
+    const tid = tenantId || user.tenantId || '';
+    if (tid) {
+      localStorage.setItem('chatledger_tenant_id', tid);
+      localStorage.setItem('nexaflow_tenant_id', tid);
     }
     set({ user, token, isAuthenticated: true });
   },
   logout: () => {
+    localStorage.removeItem('chatledger_token');
     localStorage.removeItem('nexaflow_token');
+    localStorage.removeItem('chatledger_user');
     localStorage.removeItem('nexaflow_user');
+    localStorage.removeItem('chatledger_tenant_id');
     localStorage.removeItem('nexaflow_tenant_id');
     set({ user: null, token: null, isAuthenticated: false });
   },
   initialize: () => {
     if (typeof window === 'undefined') return;
-    const token = localStorage.getItem('nexaflow_token');
-    const userStr = localStorage.getItem('nexaflow_user');
+    const token = localStorage.getItem('chatledger_token') || localStorage.getItem('nexaflow_token');
+    const userStr = localStorage.getItem('chatledger_user') || localStorage.getItem('nexaflow_user');
     if (token && userStr) {
       try {
         const user = JSON.parse(userStr);
         set({ user, token, isAuthenticated: true });
         return;
       } catch (e) {
+        localStorage.removeItem('chatledger_token');
         localStorage.removeItem('nexaflow_token');
-        localStorage.removeItem('nexaflow_user');
       }
     }
 
@@ -65,6 +72,6 @@ export const useAuthStore = create<AuthState>((set) => ({
       businessName: 'Apex Multispecialty Clinic',
       permissions: ['*'],
     };
-    set({ user: demoUser, token: null, isAuthenticated: true });
+    set({ user: demoUser, token: token || null, isAuthenticated: true });
   },
 }));

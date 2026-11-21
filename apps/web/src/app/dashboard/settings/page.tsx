@@ -15,12 +15,14 @@ import {
   Sparkles,
   Layout,
   Check,
+  Globe,
 } from 'lucide-react';
 import { apiRequest } from '../../../lib/api';
 import { THEME_PRESETS, ThemePreset, ThemeConfig, DEFAULT_THEME_CONFIG } from '../../../design-system/theme';
+import { useLanguage } from '../../../i18n/LanguageContext';
 
 export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState<'general' | 'appearance' | 'notifications' | 'security'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'appearance' | 'language' | 'notifications' | 'security'>('general');
   const [tenant, setTenant] = useState<any>({
     name: 'Apex Multispecialty Clinic',
     email: 'doctor.sharma@apexclinic.com',
@@ -34,6 +36,8 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
+
+  const { currentLanguage, setLanguage, supportedLanguages, t } = useLanguage();
 
   // Theme Settings State
   const [themeConfig, setThemeConfig] = useState<ThemeConfig>(DEFAULT_THEME_CONFIG);
@@ -112,71 +116,141 @@ export default function SettingsPage() {
         <div>
           <h1 className="text-lg font-bold text-[#202938] tracking-tight flex items-center gap-2">
             <Settings className="w-5 h-5 text-[#243B5A]" />
-            Workspace & Platform Settings
+            {t('settings.title', 'Workspace & Platform Settings')}
           </h1>
           <p className="text-xs text-[#707B8B]">
-            Manage business profile, enterprise appearance presets, WhatsApp rules, and security.
+            {t('settings.subtitle', 'Manage organization profile, business hours, GSTIN, theme customization, and language preference.')}
           </p>
         </div>
 
         {savedSuccess && (
           <div className="px-3 py-1.5 rounded-lg bg-[#23865B]/10 text-[#23865B] text-xs font-bold border border-[#23865B]/20 flex items-center gap-1.5 animate-in fade-in">
             <CheckCircle2 className="w-4 h-4" />
-            Changes Saved Successfully
+            {t('settings.savedSuccess', 'Changes Saved Successfully')}
           </div>
         )}
       </div>
 
       {/* Settings Navigation Tabs */}
-      <div className="flex items-center gap-2 border-b border-[#E6EAF0] pb-2 text-xs font-semibold">
+      <div className="flex items-center gap-2 border-b border-[#E6EAF0] pb-2 text-xs font-semibold overflow-x-auto">
         <button
           onClick={() => setActiveTab('general')}
-          className={`px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 ${
+          className={`px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap ${
             activeTab === 'general'
               ? 'bg-[#243B5A] text-white shadow-xs'
               : 'text-[#707B8B] hover:text-[#202938] hover:bg-[#F2F4F7]'
           }`}
         >
           <Building2 className="w-3.5 h-3.5" />
-          General & Business Profile
+          {t('settings.generalTab', 'General')}
         </button>
 
         <button
           onClick={() => setActiveTab('appearance')}
-          className={`px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 ${
+          className={`px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap ${
             activeTab === 'appearance'
               ? 'bg-[#243B5A] text-white shadow-xs'
               : 'text-[#707B8B] hover:text-[#202938] hover:bg-[#F2F4F7]'
           }`}
         >
           <Palette className="w-3.5 h-3.5" />
-          Appearance & Themes
+          {t('settings.appearanceTab', 'Appearance & Theme')}
+        </button>
+
+        <button
+          onClick={() => setActiveTab('language')}
+          className={`px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap ${
+            activeTab === 'language'
+              ? 'bg-[#243B5A] text-white shadow-xs'
+              : 'text-[#707B8B] hover:text-[#202938] hover:bg-[#F2F4F7]'
+          }`}
+        >
+          <Globe className="w-3.5 h-3.5" />
+          {t('settings.languageTab', 'Language & Localization')}
         </button>
 
         <button
           onClick={() => setActiveTab('notifications')}
-          className={`px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 ${
+          className={`px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap ${
             activeTab === 'notifications'
               ? 'bg-[#243B5A] text-white shadow-xs'
               : 'text-[#707B8B] hover:text-[#202938] hover:bg-[#F2F4F7]'
           }`}
         >
           <Bell className="w-3.5 h-3.5" />
-          Notifications & Alerts
+          {t('settings.notificationsTab', 'Notifications')}
         </button>
 
         <button
           onClick={() => setActiveTab('security')}
-          className={`px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 ${
+          className={`px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap ${
             activeTab === 'security'
               ? 'bg-[#243B5A] text-white shadow-xs'
               : 'text-[#707B8B] hover:text-[#202938] hover:bg-[#F2F4F7]'
           }`}
         >
           <ShieldCheck className="w-3.5 h-3.5" />
-          Security & Access
+          {t('settings.securityTab', 'Security')}
         </button>
       </div>
+
+      {/* TAB: LANGUAGE & LOCALIZATION */}
+      {activeTab === 'language' && (
+        <div className="space-y-5">
+          <div className="bg-white p-5 rounded-xl border border-[#E6EAF0] shadow-xs space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-[#E6EAF0]">
+              <div>
+                <h2 className="text-xs font-bold text-[#202938] uppercase tracking-wider">
+                  {t('settings.selectLanguage', 'Select Preferred Language')}
+                </h2>
+                <p className="text-[11px] text-[#707B8B] mt-0.5">
+                  {t('settings.languageDescription', 'Switch the entire application interface into your preferred language instantly.')}
+                </p>
+              </div>
+              <span className="px-2.5 py-1 rounded-full bg-[#356AE6]/10 text-[#356AE6] text-xs font-bold">
+                14 World Languages Supported
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+              {supportedLanguages.map((lang) => {
+                const isSelected = lang.code === currentLanguage;
+                return (
+                  <button
+                    key={lang.code}
+                    type="button"
+                    onClick={() => {
+                      setLanguage(lang.code);
+                      setSavedSuccess(true);
+                      setTimeout(() => setSavedSuccess(false), 2500);
+                    }}
+                    className={`p-3.5 rounded-xl border text-left flex items-center justify-between transition-all ${
+                      isSelected
+                        ? 'border-[#356AE6] bg-[#356AE6]/5 shadow-xs ring-1 ring-[#356AE6]'
+                        : 'border-[#E6EAF0] hover:border-[#356AE6]/50 hover:bg-[#F7F8FA]'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">{lang.flag}</span>
+                      <div className="flex flex-col">
+                        <span className="text-xs font-bold text-[#202938]">{lang.nativeName}</span>
+                        <span className="text-[10px] text-[#707B8B]">
+                          {lang.name} {lang.direction === 'rtl' ? '(RTL)' : ''}
+                        </span>
+                      </div>
+                    </div>
+                    {isSelected && (
+                      <div className="w-5 h-5 rounded-full bg-[#356AE6] text-white flex items-center justify-center">
+                        <Check className="w-3.5 h-3.5" />
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* TAB 1: GENERAL & BUSINESS DETAILS */}
       {activeTab === 'general' && (
@@ -208,7 +282,7 @@ export default function SettingsPage() {
               </div>
 
               <div>
-                <label className="font-semibold text-[#202938]">WhatsApp Business Number</label>
+                <label className="font-semibold text-[#202938]">Verified WhatsApp / Phone</label>
                 <input
                   type="text"
                   value={tenant?.phone || ''}
@@ -218,12 +292,12 @@ export default function SettingsPage() {
               </div>
 
               <div>
-                <label className="font-semibold text-[#202938]">GSTIN (Indian Tax Identifier)</label>
+                <label className="font-semibold text-[#202938]">GSTIN / Tax ID Number</label>
                 <input
                   type="text"
                   value={tenant?.gstin || ''}
                   onChange={(e) => setTenant({ ...tenant, gstin: e.target.value })}
-                  className="mt-1 w-full rounded-lg border border-[#E6EAF0] px-3 py-2 text-xs font-mono focus:outline-none focus:border-[#356AE6]"
+                  className="mt-1 w-full rounded-lg border border-[#E6EAF0] px-3 py-2 text-xs focus:outline-none focus:border-[#356AE6]"
                 />
               </div>
 
@@ -236,52 +310,6 @@ export default function SettingsPage() {
                   className="mt-1 w-full rounded-lg border border-[#E6EAF0] px-3 py-2 text-xs focus:outline-none focus:border-[#356AE6]"
                 />
               </div>
-
-              <div>
-                <label className="font-semibold text-[#202938]">City</label>
-                <input
-                  type="text"
-                  value={tenant?.city || ''}
-                  onChange={(e) => setTenant({ ...tenant, city: e.target.value })}
-                  className="mt-1 w-full rounded-lg border border-[#E6EAF0] px-3 py-2 text-xs focus:outline-none focus:border-[#356AE6]"
-                />
-              </div>
-
-              <div>
-                <label className="font-semibold text-[#202938]">State & Country</label>
-                <input
-                  type="text"
-                  value={`${tenant?.state || ''}, ${tenant?.country || 'IN'}`}
-                  onChange={(e) => setTenant({ ...tenant, state: e.target.value })}
-                  className="mt-1 w-full rounded-lg border border-[#E6EAF0] px-3 py-2 text-xs focus:outline-none focus:border-[#356AE6]"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white p-5 rounded-xl border border-[#E6EAF0] shadow-xs space-y-4">
-            <h2 className="text-xs font-bold text-[#202938] uppercase tracking-wider pb-2 border-b border-[#E6EAF0]">
-              Operational Hours & Calendar Sync
-            </h2>
-
-            <div className="grid grid-cols-2 gap-4 text-xs">
-              <div>
-                <label className="font-semibold text-[#202938]">Opening Time (Morning)</label>
-                <input
-                  type="time"
-                  defaultValue="09:00"
-                  className="mt-1 w-full rounded-lg border border-[#E6EAF0] px-3 py-2 text-xs focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="font-semibold text-[#202938]">Closing Time (Evening)</label>
-                <input
-                  type="time"
-                  defaultValue="20:00"
-                  className="mt-1 w-full rounded-lg border border-[#E6EAF0] px-3 py-2 text-xs focus:outline-none"
-                />
-              </div>
             </div>
           </div>
 
@@ -289,73 +317,63 @@ export default function SettingsPage() {
             <button
               type="submit"
               disabled={saving}
-              className="px-5 py-2 rounded-lg bg-[#243B5A] hover:bg-[#1A2B42] text-white font-semibold text-xs transition-colors flex items-center gap-1.5 shadow-xs"
+              className="px-5 py-2 rounded-lg bg-[#243B5A] hover:bg-[#1A2B42] text-white font-semibold text-xs transition-colors flex items-center gap-1.5 shadow-xs disabled:opacity-50"
             >
               <Save className="w-3.5 h-3.5 text-white" />
-              {saving ? 'Saving...' : 'Save General Settings'}
+              {saving ? t('common.saving', 'Saving...') : t('common.save', 'Save Changes')}
             </button>
           </div>
         </form>
       )}
 
-      {/* TAB 2: ADVANCED THEME & APPEARANCE SYSTEM */}
+      {/* TAB 2: APPEARANCE & THEMES */}
       {activeTab === 'appearance' && (
         <div className="space-y-6">
-          {/* Preset Selector */}
-          <div className="bg-white p-5 rounded-xl border border-[#E6EAF0] shadow-xs space-y-4">
-            <div>
-              <h2 className="text-xs font-bold text-[#202938] uppercase tracking-wider">
-                Enterprise Appearance Presets
-              </h2>
-              <p className="text-xs text-[#707B8B] mt-0.5">
-                Select a pre-tuned, high-contrast corporate aesthetic designed for information density.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {(Object.keys(THEME_PRESETS) as ThemePreset[]).map((key) => {
-                const p = THEME_PRESETS[key];
-                const isSelected = themeConfig.preset === key;
-                return (
-                  <button
-                    key={key}
-                    type="button"
-                    onClick={() => handleSelectPreset(key)}
-                    className={`p-3.5 rounded-xl border text-left transition-all relative ${
-                      isSelected
-                        ? 'border-[#356AE6] bg-[#356AE6]/5 shadow-xs ring-1 ring-[#356AE6]'
-                        : 'border-[#E6EAF0] hover:border-[#D0D5DD] bg-white'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-1.5">
-                        <span className="w-3 h-3 rounded-full" style={{ backgroundColor: p.primaryNavy }}></span>
-                        <span className="w-3 h-3 rounded-full" style={{ backgroundColor: p.primaryBlue }}></span>
-                        <span className="w-3 h-3 rounded-full border border-[#E6EAF0]" style={{ backgroundColor: p.background }}></span>
-                      </div>
-                      {isSelected && (
-                        <span className="w-4 h-4 rounded-full bg-[#356AE6] text-white flex items-center justify-center text-[10px]">
-                          <Check className="w-2.5 h-2.5" />
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-xs font-bold text-[#202938]">{p.name}</div>
-                    <div className="text-[11px] text-[#707B8B] leading-tight mt-1">{p.description}</div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Granular Theme Controls */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Density & Border Settings */}
+          <div className="space-y-4">
             <div className="bg-white p-5 rounded-xl border border-[#E6EAF0] shadow-xs space-y-4">
-              <h3 className="text-xs font-bold text-[#202938] uppercase tracking-wider">
-                Density & Structure
-              </h3>
+              <h2 className="text-xs font-bold text-[#202938] uppercase tracking-wider pb-2 border-b border-[#E6EAF0]">
+                {t('settings.themePresets', 'Theme Presets')}
+              </h2>
 
-              <div className="space-y-3 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {(Object.keys(THEME_PRESETS) as ThemePreset[]).map((key) => {
+                  const preset = THEME_PRESETS[key];
+                  const isSelected = themeConfig.preset === key;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => handleSelectPreset(key)}
+                      className={`p-4 rounded-xl border text-left transition-all relative ${
+                        isSelected
+                          ? 'border-[#356AE6] bg-[#356AE6]/5 shadow-xs ring-1 ring-[#356AE6]'
+                          : 'border-[#E6EAF0] bg-white hover:border-[#356AE6]/50'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-bold text-xs text-[#202938]">{preset.name}</span>
+                        {isSelected && <Check className="w-4 h-4 text-[#356AE6]" />}
+                      </div>
+
+                      <div className="flex items-center gap-1.5 my-2">
+                        <span className="w-4 h-4 rounded-full border border-black/10" style={{ backgroundColor: preset.primaryNavy }}></span>
+                        <span className="w-4 h-4 rounded-full border border-black/10" style={{ backgroundColor: preset.primaryBlue }}></span>
+                        <span className="w-4 h-4 rounded-full border border-black/10" style={{ backgroundColor: preset.background }}></span>
+                      </div>
+
+                      <p className="text-[10px] text-[#707B8B] leading-relaxed">{preset.description}</p>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="bg-white p-5 rounded-xl border border-[#E6EAF0] shadow-xs space-y-4">
+              <h2 className="text-xs font-bold text-[#202938] uppercase tracking-wider pb-2 border-b border-[#E6EAF0]">
+                Density & Radius Tokens
+              </h2>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                 <div>
                   <label className="font-semibold text-[#202938] block mb-1">Layout Density</label>
                   <div className="grid grid-cols-2 gap-2">

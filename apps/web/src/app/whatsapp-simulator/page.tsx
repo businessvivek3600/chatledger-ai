@@ -19,8 +19,11 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { apiRequest } from '../../lib/api';
+import LanguageSwitcher from '../../components/LanguageSwitcher';
+import { useLanguage } from '../../i18n/LanguageContext';
 
 export default function WhatsAppSimulatorPage() {
+  const { t } = useLanguage();
   const [phone, setPhone] = useState('+919811223344');
   const [customerName, setCustomerName] = useState('Rohan Deshmukh');
   const [inputMessage, setInputMessage] = useState('');
@@ -71,59 +74,46 @@ export default function WhatsAppSimulatorPage() {
     scrollToBottom();
   }, [messages, isTyping]);
 
-  const handleSendMessage = async (customText?: string) => {
-    const textToSend = customText || inputMessage;
-    if (!textToSend.trim()) return;
+  const handleSendMessage = async (textToSend?: string) => {
+    const text = (textToSend || inputMessage).trim();
+    if (!text) return;
 
-    const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-    setMessages((prev) => [...prev, { sender: 'customer', text: textToSend, time: nowTime }]);
-    if (!customText) setInputMessage('');
+    const timeNow = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    setMessages((prev) => [...prev, { sender: 'customer', text, time: timeNow }]);
+    setInputMessage('');
     setIsTyping(true);
 
     try {
-      // 1. Trigger backend webhook processing
-      const response = await apiRequest<any>('/whatsapp/simulate-incoming', {
+      const res = await apiRequest<{
+        reply?: string;
+        handlingMode: 'AI' | 'HUMAN';
+      }>('/whatsapp/simulator/send', {
         method: 'POST',
         body: JSON.stringify({
           phone,
-          name: customerName,
-          message: textToSend,
+          customerName,
+          text,
         }),
       });
 
-      // 2. Extract AI response directly from webhook execution
-      const aiMsg = response?.results?.[0]?.aiResponse;
-      const conv = response?.results?.[0]?.conversation;
-      if (conv?.handlingMode) {
-        setHandlingMode(conv.handlingMode);
+      if (res?.handlingMode) {
+        setHandlingMode(res.handlingMode);
       }
 
-      const aiReplyText =
-        aiMsg?.content ||
-        'Thank you for contacting Apex Clinic! How else may I assist you with your appointment or inquiry?';
-
-      setTimeout(() => {
+      if (res?.reply) {
         setMessages((prev) => [
           ...prev,
           {
             sender: 'ai',
-            text: aiReplyText,
+            text: res.reply || 'Thank you for reaching out.',
             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           },
         ]);
-        setIsTyping(false);
-      }, 600);
-    } catch (err: any) {
+      }
+    } catch (err) {
+      console.error('Message failed', err);
+    } finally {
       setIsTyping(false);
-      setMessages((prev) => [
-        ...prev,
-        {
-          sender: 'ai',
-          text: 'Thank you for your message! Our clinic team is available to assist you.',
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        },
-      ]);
     }
   };
 
@@ -135,15 +125,9 @@ export default function WhatsAppSimulatorPage() {
         body: JSON.stringify({ phone }),
       });
       setHandlingMode('AI');
-      setMessages([
-        {
-          sender: 'ai',
-          text: 'Hello Rohan! Welcome to Apex Multispecialty Clinic. How can we assist you with doctor schedules, appointment bookings, or clinic timings today?',
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        },
-      ]);
+      await loadHistory();
     } catch (err) {
-      console.error('Reset failed', err);
+      console.error('Failed to reset simulator state', err);
     } finally {
       setIsResetting(false);
     }
@@ -151,24 +135,29 @@ export default function WhatsAppSimulatorPage() {
 
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col items-center justify-center p-4">
-      {/* Top Banner Navigation & Reset */}
+      {/* Top Banner Navigation, Reset & Language Switcher */}
       <div className="w-full max-w-md mb-3 flex items-center justify-between">
         <Link
           href="/dashboard/inbox"
           className="text-xs font-semibold text-slate-300 hover:text-white flex items-center gap-1.5 bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-700 shadow-sm"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
-          Back to Shared Inbox
+          {t('inbox.title', 'Shared Inbox')}
         </Link>
-        <button
-          onClick={handleResetChat}
-          disabled={isResetting}
-          className="text-[11px] font-semibold text-rose-300 hover:text-rose-100 flex items-center gap-1.5 bg-rose-950/60 hover:bg-rose-900/80 px-2.5 py-1.5 rounded-xl border border-rose-800/80 shadow-sm transition-colors"
-          title="Reset conversation state back to fresh AI assistant mode"
-        >
-          <RotateCcw className={`w-3.5 h-3.5 ${isResetting ? 'animate-spin' : ''}`} />
-          Reset Chat & AI
-        </button>
+
+        <div className="flex items-center gap-2">
+          <LanguageSwitcher variant="compact" />
+
+          <button
+            onClick={handleResetChat}
+            disabled={isResetting}
+            className="text-[11px] font-semibold text-rose-300 hover:text-rose-100 flex items-center gap-1.5 bg-rose-950/60 hover:bg-rose-900/80 px-2.5 py-1.5 rounded-xl border border-rose-800/80 shadow-sm transition-colors"
+            title="Reset conversation state back to fresh AI assistant mode"
+          >
+            <RotateCcw className={`w-3.5 h-3.5 ${isResetting ? 'animate-spin' : ''}`} />
+            {t('common.refresh', 'Reset')}
+          </button>
+        </div>
       </div>
 
       {/* Preset Action Chips */}
@@ -177,13 +166,13 @@ export default function WhatsAppSimulatorPage() {
           onClick={() => handleSendMessage('Do you have openings tomorrow for skin consultation?')}
           className="px-2.5 py-1.5 rounded-full bg-slate-800 hover:bg-slate-700 border border-slate-700 whitespace-nowrap active:scale-95 transition-all text-emerald-300"
         >
-          📅 Ask Open Slots
+          📅 {t('appointments.bookAppointment', 'Ask Open Slots')}
         </button>
         <button
           onClick={() => handleSendMessage('What are your consultation charges and fees?')}
           className="px-2.5 py-1.5 rounded-full bg-slate-800 hover:bg-slate-700 border border-slate-700 whitespace-nowrap active:scale-95 transition-all text-amber-300"
         >
-          💰 Inquire Fees
+          💰 {t('payments.title', 'Inquire Fees')}
         </button>
         <button
           onClick={() => handleSendMessage('Where is your clinic located and what are your timings?')}
@@ -195,14 +184,14 @@ export default function WhatsAppSimulatorPage() {
           onClick={() => handleSendMessage('I want to speak with a human agent please.')}
           className="px-2.5 py-1.5 rounded-full bg-slate-800 hover:bg-slate-700 border border-slate-700 whitespace-nowrap active:scale-95 transition-all text-purple-300"
         >
-          🙋 Request Human
+          🙋 {t('inbox.humanAgent', 'Request Human')}
         </button>
         {handlingMode === 'HUMAN' && (
           <button
             onClick={() => handleSendMessage('restart')}
             className="px-2.5 py-1.5 rounded-full bg-emerald-900/80 hover:bg-emerald-800 border border-emerald-600 text-emerald-200 whitespace-nowrap active:scale-95 transition-all font-semibold"
           >
-            🤖 Resume AI
+            🤖 {t('inbox.aiMode', 'Resume AI')}
           </button>
         )}
       </div>
@@ -210,16 +199,16 @@ export default function WhatsAppSimulatorPage() {
       {/* Mode Indicator Banner */}
       <div className="w-full max-w-sm mb-2 flex items-center justify-between px-2 text-xs">
         <div className="flex items-center gap-1.5">
-          <span className="text-slate-400">Current Mode:</span>
+          <span className="text-slate-400">{t('common.status', 'Mode')}:</span>
           {handlingMode === 'AI' ? (
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
               <Bot className="w-3 h-3" />
-              Automated AI Assistant
+              {t('inbox.aiHandledBadge', 'Automated AI Assistant')}
             </span>
           ) : (
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/40">
               <UserCheck className="w-3 h-3" />
-              Handed Over to Human Staff
+              {t('inbox.humanHandledBadge', 'Handed Over to Human Staff')}
             </span>
           )}
         </div>
@@ -248,65 +237,58 @@ export default function WhatsAppSimulatorPage() {
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse"></span>
                 </div>
                 <div className="text-[10px] text-emerald-100 font-medium flex items-center gap-1">
-                  <span>Official WhatsApp Verified</span>
-                  <span>•</span>
-                  <span className="text-emerald-200">Online</span>
+                  {isTyping ? (
+                    <span className="text-emerald-200 animate-pulse">{t('simulator.typing', 'typing...')}</span>
+                  ) : (
+                    <span>{t('simulator.online', 'online')}</span>
+                  )}
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 text-white">
-              <Video className="w-4 h-4 cursor-pointer hover:opacity-80" />
-              <Phone className="w-4 h-4 cursor-pointer hover:opacity-80" />
-              <MoreVertical className="w-4 h-4 cursor-pointer hover:opacity-80" />
+            <div className="flex items-center gap-3 text-emerald-100">
+              <Video className="w-4 h-4 cursor-pointer hover:text-white" />
+              <Phone className="w-4 h-4 cursor-pointer hover:text-white" />
+              <MoreVertical className="w-4 h-4 cursor-pointer hover:text-white" />
             </div>
           </div>
 
-          {/* Messages Flow */}
-          <div className="flex-1 p-3 overflow-y-auto space-y-2.5 bg-[#E5DDD5]">
-            <div className="text-center my-1">
-              <span className="text-[10px] bg-amber-100/90 text-amber-900 px-3 py-1 rounded-md shadow-xs border border-amber-200/50">
-                🔒 Messages are end-to-end encrypted. Meta Cloud API verified.
-              </span>
-            </div>
-
-            {messages.map((m, idx) => {
-              const isCust = m.sender === 'customer';
-              return (
-                <div key={idx} className={`flex ${isCust ? 'justify-end' : 'justify-start'}`}>
-                  <div
-                    className={`max-w-[85%] rounded-lg px-3 py-2 text-xs leading-relaxed shadow-xs ${
-                      isCust
-                        ? 'bg-[#DCF8C6] text-slate-800 rounded-tr-none border border-emerald-300/40'
-                        : 'bg-white text-slate-900 rounded-tl-none border border-slate-200/70'
-                    }`}
-                  >
-                    <div className="whitespace-pre-wrap">{m.text}</div>
-                    <div className="flex items-center justify-end gap-1 mt-1 text-[9px] text-slate-400">
-                      <span>{m.time}</span>
-                      {isCust && <CheckCheck className="w-3 h-3 text-sky-500" />}
-                    </div>
+          {/* Chat Messages */}
+          <div className="flex-1 p-3 overflow-y-auto space-y-2 bg-[radial-gradient(#075e5410_1px,transparent_1px)] [background-size:16px_16px]">
+            {messages.map((m, idx) => (
+              <div
+                key={idx}
+                className={`flex ${m.sender === 'customer' ? 'justify-end' : 'justify-start'}`}
+              >
+                <div
+                  className={`max-w-[85%] rounded-2xl px-3 py-2 text-xs shadow-xs leading-relaxed relative ${
+                    m.sender === 'customer'
+                      ? 'bg-[#E7FFDB] text-slate-900 rounded-tr-none'
+                      : 'bg-white text-slate-900 rounded-tl-none border border-slate-200/60'
+                  }`}
+                >
+                  <div className="whitespace-pre-wrap">{m.text}</div>
+                  <div className="flex items-center justify-end gap-1 mt-1 text-[9px] text-slate-400">
+                    <span>{m.time}</span>
+                    {m.sender === 'customer' && <CheckCheck className="w-3.5 h-3.5 text-sky-500" />}
                   </div>
                 </div>
-              );
-            })}
+              </div>
+            ))}
 
             {isTyping && (
               <div className="flex justify-start">
-                <div className="bg-white rounded-lg px-3 py-1.5 text-[11px] text-slate-600 rounded-tl-none shadow-xs flex items-center gap-2 border border-slate-200">
-                  <div className="flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-bounce"></span>
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-bounce [animation-delay:0.2s]"></span>
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-bounce [animation-delay:0.4s]"></span>
-                  </div>
-                  <span className="font-medium text-slate-500">Apex Assistant is typing...</span>
+                <div className="bg-white rounded-2xl rounded-tl-none px-3 py-2 text-xs text-slate-500 border border-slate-200/60 flex items-center gap-1.5 shadow-xs">
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce"></span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce [animation-delay:0.2s]"></span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce [animation-delay:0.4s]"></span>
                 </div>
               </div>
             )}
             <div ref={messagesEndRef} />
           </div>
 
-          {/* WhatsApp Bottom Composer */}
+          {/* Input Bar */}
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -314,34 +296,24 @@ export default function WhatsAppSimulatorPage() {
             }}
             className="p-2 bg-[#F0F2F5] flex items-center gap-2 border-t border-slate-200"
           >
-            <Smile className="w-5 h-5 text-slate-500 cursor-pointer hover:text-slate-700" />
-            <Paperclip className="w-4 h-4 text-slate-500 cursor-pointer hover:text-slate-700" />
-
+            <Smile className="w-5 h-5 text-slate-500 cursor-pointer" />
+            <Paperclip className="w-4 h-4 text-slate-500 cursor-pointer" />
             <input
               type="text"
-              placeholder="Type a WhatsApp message..."
+              placeholder={t('simulator.sendPlaceholder', 'Message WhatsApp Bot...')}
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
-              className="flex-1 bg-white rounded-full px-3 py-1.5 text-xs text-slate-900 focus:outline-none border border-slate-300"
+              className="flex-1 bg-white rounded-full px-4 py-2 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none border border-slate-300"
             />
-
             <button
               type="submit"
-              disabled={!inputMessage.trim() || isTyping}
-              className="w-8 h-8 rounded-full bg-[#128C7E] hover:bg-[#075E54] text-white flex items-center justify-center transition-colors shadow-sm disabled:opacity-50"
+              disabled={!inputMessage.trim()}
+              className="w-8 h-8 rounded-full bg-[#00A884] text-white flex items-center justify-center hover:bg-[#075E54] active:scale-95 transition-all disabled:opacity-50"
             >
-              <Send className="w-3.5 h-3.5" />
+              <Send className="w-4 h-4 ml-0.5" />
             </button>
           </form>
         </div>
-      </div>
-
-      <div className="mt-3 text-xs text-slate-400 text-center max-w-sm">
-        Every message typed here executes the full backend pipeline and syncs in real-time with the{' '}
-        <Link href="/dashboard/inbox" className="underline text-emerald-400 font-semibold hover:text-emerald-300">
-          Business Owner Shared Inbox
-        </Link>
-        .
       </div>
     </div>
   );

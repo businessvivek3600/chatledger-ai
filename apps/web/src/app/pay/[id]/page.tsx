@@ -24,8 +24,11 @@ import {
   Phone,
 } from 'lucide-react';
 import ChatLedgerLogo from '../../../components/ChatLedgerLogo';
+import LanguageSwitcher from '../../../components/LanguageSwitcher';
+import { useLanguage } from '../../../i18n/LanguageContext';
 
 export default function RazorpayCheckoutPage() {
+  const { t } = useLanguage();
   const params = useParams();
   const router = useRouter();
   const paymentId = (params?.id as string) || 'apex_demo_pay';
@@ -149,9 +152,12 @@ export default function RazorpayCheckoutPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-1 text-[11px] text-emerald-400 font-semibold bg-emerald-950/60 px-2 py-1 rounded-full border border-emerald-500/30">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-            Verified Merchant
+          <div className="flex items-center gap-2">
+            <LanguageSwitcher variant="compact" />
+            <div className="flex items-center gap-1 text-[11px] text-emerald-400 font-semibold bg-emerald-950/60 px-2 py-1 rounded-full border border-emerald-500/30">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+              Verified
+            </div>
           </div>
         </div>
 
