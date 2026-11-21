@@ -105,7 +105,7 @@ export default function IntegrationsPage() {
           <div className="pt-1 text-[11px] text-[#707B8B]">
             Webhook Callback URL:
             <code className="block mt-1 p-2 bg-[#F2F4F7] border border-[#E6EAF0] rounded-md text-[#202938] font-mono text-[10px] break-all">
-              http://localhost:4000/api/v1/whatsapp/webhook
+              {typeof window !== "undefined" && process.env.NEXT_PUBLIC_API_URL ? `${process.env.NEXT_PUBLIC_API_URL}/whatsapp/webhook` : "https://api.yourdomain.com/api/v1/whatsapp/webhook"}
             </code>
           </div>
         </div>
@@ -147,7 +147,7 @@ export default function IntegrationsPage() {
           <div className="pt-1 text-[11px] text-[#707B8B]">
             Payment Webhook URL:
             <code className="block mt-1 p-2 bg-[#F2F4F7] border border-[#E6EAF0] rounded-md text-[#202938] font-mono text-[10px] break-all">
-              http://localhost:4000/api/v1/payments/webhook
+              {typeof window !== "undefined" && process.env.NEXT_PUBLIC_API_URL ? `${process.env.NEXT_PUBLIC_API_URL}/payments/webhook` : "https://api.yourdomain.com/api/v1/payments/webhook"}
             </code>
           </div>
         </div>
