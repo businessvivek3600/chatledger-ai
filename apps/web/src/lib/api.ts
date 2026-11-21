@@ -1,11 +1,26 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
+export function getApiBaseUrl(): string {
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, "");
+  }
+  if (typeof window !== "undefined") {
+    const saved = localStorage.getItem("chatledger_custom_api_url");
+    if (saved) return saved.replace(/\/$/, "");
+
+    // When deployed on live hosting (e.g. Vercel) without env var, default to live backend endpoint
+    const hostname = window.location.hostname;
+    if (hostname !== "localhost" && hostname !== "127.0.0.1") {
+      return "https://chatledger-api.onrender.com/api/v1";
+    }
+  }
+  return "http://localhost:4000/api/v1";
+}
 
 let pendingDemoAuth: Promise<string | null> | null = null;
 
 export async function loginDemoUser(): Promise<string | null> {
   if (typeof window === 'undefined') return null;
   try {
-    const res = await fetch(`${API_BASE_URL}/auth/login`, {
+    const res = await fetch(`${getApiBaseUrl()}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -82,7 +97,7 @@ export async function apiRequest<T = any>(
     headers['X-Tenant-Id'] = tenantId;
   }
 
-  const url = `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
+  const url = `${getApiBaseUrl()}${endpoint.startsWith("/" ) ? endpoint : `/${endpoint}`}`;
 
   const res = await fetch(url, {
     ...options,

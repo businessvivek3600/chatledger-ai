@@ -26,8 +26,7 @@ import {
 import ChatLedgerLogo from '../../../components/ChatLedgerLogo';
 import LanguageSwitcher from '../../../components/LanguageSwitcher';
 import { useLanguage } from '../../../i18n/LanguageContext';
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1";
+import { getApiBaseUrl } from '../../../lib/api';
 
 export default function RazorpayCheckoutPage() {
   const { t } = useLanguage();
@@ -49,7 +48,7 @@ export default function RazorpayCheckoutPage() {
   useEffect(() => {
     const fetchPaymentDetails = async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/payments/public/request/${paymentId}`);
+        const res = await fetch(`${getApiBaseUrl()}/payments/public/request/${paymentId}`);
         const json = await res.json();
         if (json.success && json.data) {
           setPayment(json.data);
@@ -94,7 +93,7 @@ export default function RazorpayCheckoutPage() {
     setProcessingState('authorizing');
 
     try {
-      const res = await fetch(`${API_BASE_URL}/payments/public/request/${paymentId}/pay`, {
+      const res = await fetch(`${getApiBaseUrl()}/payments/public/request/${paymentId}/pay`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ paymentMethod: selectedMethod.toUpperCase() }),
