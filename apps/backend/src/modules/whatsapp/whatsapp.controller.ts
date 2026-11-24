@@ -101,6 +101,29 @@ export class WhatsAppController {
   }
 
   /**
+   * Interactive Simulator Direct Message Endpoint
+   * Allows frontend WhatsApp mobile mock to send a message directly
+   * and receive the generated AI response and handling mode.
+   */
+  @Public()
+  @Post('simulator/send')
+  @HttpCode(HttpStatus.OK)
+  async simulatorSend(
+    @Body()
+    body: {
+      phone: string;
+      customerName?: string;
+      text: string;
+    },
+  ) {
+    return this.whatsappService.handleSimulatorSend(
+      body.phone || '+919811223344',
+      body.customerName || 'Rohan Deshmukh',
+      body.text,
+    );
+  }
+
+  /**
    * Retrieve conversation messages for WhatsApp simulator (public)
    */
   @Public()

@@ -344,7 +344,55 @@ export class WhatsAppService {
         lower.includes('schedule') ||
         lower.includes('available')
       ) {
-        aiReply = `📅 *Available Appointment Slots Tomorrow:*\n• 11:00 AM — Morning Slot\n• 02:30 PM — Afternoon Slot\n• 04:30 PM — Evening Slot\n• 06:00 PM — Late Evening Slot\n\nOur key services:\n${serviceList}\n\nPlease reply with your preferred time slot and doctor/service to confirm your booking!`;
+        aiReply = `📅 *Available Appointment Slots Tomorrow:*\n• 11:00 AM — Morning Slot (Dr. Ananya Patel - Dermatology)\n• 02:30 PM — Afternoon Slot (Dr. Ramesh Sharma - General Physician)\n• 04:30 PM — Evening Slot (Dr. Vikram Mehta - Pediatrics)\n• 06:00 PM — Late Evening Slot\n\nOur key services:\n${serviceList}\n\nPlease reply with your preferred time slot (e.g. *"11:00 AM"*) to confirm your booking!`;
+      }
+      // 5b. Slot Confirmation & Booking Completion
+      else if (
+        lower.includes('11:00') ||
+        lower.includes('11 am') ||
+        lower.includes('11am') ||
+        lower.includes('2:30') ||
+        lower.includes('4:30') ||
+        lower.includes('confirm') ||
+        lower.includes('yes please')
+      ) {
+        const slotChosen = lower.includes('2:30') ? 'Tomorrow at 02:30 PM' : 'Tomorrow at 11:00 AM';
+        const bookingRef = `APT-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+
+        try {
+          const service = await this.prisma.appointmentService.findFirst({
+            where: { tenantId },
+          });
+          const member = await this.prisma.tenantMember.findFirst({
+            where: { tenantId },
+            include: { user: true },
+          });
+
+          if (service) {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            tomorrow.setHours(11, 0, 0, 0);
+            const endTime = new Date(tomorrow);
+            endTime.setMinutes(endTime.getMinutes() + service.durationMinutes);
+
+            await this.prisma.appointment.create({
+              data: {
+                tenantId,
+                customerId,
+                serviceId: service.id,
+                assignedUserId: member?.userId || null,
+                scheduledAt: tomorrow,
+                endAt: endTime,
+                status: 'CONFIRMED',
+                notes: `Simulated WhatsApp Booking Ref: #${bookingRef}`,
+              },
+            });
+          }
+        } catch (aptErr) {
+          this.logger.warn('Could not auto-create appointment record in database', aptErr);
+        }
+
+        aiReply = `✅ *Appointment Confirmed!*\n\n• *Patient*: ${customer?.name || 'Rohan Deshmukh'}\n• *Doctor*: Dr. Ananya Patel (Consultant Dermatologist)\n• *Slot*: ${slotChosen}\n• *Booking Ref*: #${bookingRef}\n• *Consultation Fee*: ₹1,200 (Payable at clinic or online)\n• *Status*: Confirmed & Slot Reserved\n\n📍 *Clinic Address*: Suite 402, Lotus Grandeur, Andheri West, Mumbai.\n\nWe look forward to seeing you tomorrow! Need an online UPI payment link or clinic directions?`;
       }
       // 6. Pricing, Cost, Charges & Fees
       else if (
@@ -519,6 +567,127 @@ export class WhatsAppService {
       this.logger.error('Failed to post to Meta Cloud API', error);
       throw error;
     }
+  }
+
+  /**
+   * Handle simulated incoming message from WhatsApp mobile simulator
+   */
+  async handleSimulatorSend(phone: string, customerName: string, text: string) {
+    const raw = phone.replace(/\D/g, '');
+    const fromPhone = `+${raw}`;
+
+    // Resolve tenant
+    const defaultTenant = await this.prisma.tenant.findFirst({
+      where: { status: 'ACTIVE' },
+    });
+    const tenantId = defaultTenant?.id;
+
+    if (!tenantId) {
+      return {
+        reply: 'Thank you for contacting Apex Multispecialty Clinic! We have received your inquiry.',
+        handlingMode: HandlingMode.AI,
+      };
+    }
+
+    // 1. Find or create Customer
+    const customer = await this.prisma.customer.upsert({
+      where: {
+        tenantId_phone: {
+          tenantId,
+          phone: fromPhone,
+        },
+      },
+      create: {
+        tenantId,
+        phone: fromPhone,
+        name: customerName,
+        type: 'REGULAR',
+        lastInteractionAt: new Date(),
+      },
+      update: {
+        name: customerName,
+        lastInteractionAt: new Date(),
+      },
+    });
+
+    // 2. Find or create Conversation
+    let conversation = await this.prisma.conversation.findFirst({
+      where: {
+        tenantId,
+        customerId: customer.id,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (!conversation) {
+      conversation = await this.prisma.conversation.create({
+        data: {
+          tenantId,
+          customerId: customer.id,
+          status: ConversationStatus.OPEN,
+          handlingMode: HandlingMode.AI,
+          lastMessageAt: new Date(),
+          unreadCount: 1,
+        },
+      });
+    } else {
+      await this.prisma.conversation.update({
+        where: { id: conversation.id },
+        data: {
+          lastMessageAt: new Date(),
+          unreadCount: { increment: 1 },
+        },
+      });
+    }
+
+    // 3. Save incoming customer message
+    await this.prisma.message.create({
+      data: {
+        tenantId,
+        conversationId: conversation.id,
+        sender: MessageSender.CUSTOMER,
+        messageType: MessageType.TEXT,
+        content: text,
+        deliveryStatus: MessageDeliveryStatus.READ,
+      },
+    });
+
+    // 4. Trigger AI or check restart
+    let aiMessage: any = null;
+    let mode = conversation.handlingMode;
+
+    if (mode === HandlingMode.HUMAN) {
+      if (text.toLowerCase().includes('restart') || text.toLowerCase().includes('ai')) {
+        await this.prisma.conversation.update({
+          where: { id: conversation.id },
+          data: { handlingMode: HandlingMode.AI },
+        });
+        aiMessage = await this.dispatchAiResponse(tenantId, conversation.id, customer.id, text);
+      } else {
+        aiMessage = await this.prisma.message.create({
+          data: {
+            tenantId,
+            conversationId: conversation.id,
+            sender: MessageSender.AI,
+            messageType: MessageType.TEXT,
+            content: 'Your request has been forwarded to our clinic reception staff. An agent will respond shortly! (Type "restart" to resume automated AI booking)',
+            deliveryStatus: MessageDeliveryStatus.SENT,
+          },
+        });
+      }
+    } else {
+      aiMessage = await this.dispatchAiResponse(tenantId, conversation.id, customer.id, text);
+    }
+
+    const updatedConv = await this.prisma.conversation.findUnique({
+      where: { id: conversation.id },
+    });
+
+    return {
+      reply: aiMessage?.content || 'Thank you for reaching out to Apex Clinic. How can we help?',
+      handlingMode: updatedConv?.handlingMode || HandlingMode.AI,
+      conversationId: conversation.id,
+    };
   }
 
   /**
